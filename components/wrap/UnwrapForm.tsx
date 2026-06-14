@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useAccount } from "wagmi"
 import { toast } from "sonner"
+import { LockKeyhole } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,10 +20,10 @@ import { etherscanTx as ethTx } from "@/lib/contracts/addresses"
 import type { WrapperPair } from "@/types"
 
 const STATE_LABELS: Record<string, string> = {
-  idle: "Unwrap",
+  idle: "Initiate Unwrap",
   encrypting: "Encrypting…",
   requesting: "Submitting…",
-  pending: "Submitted — awaiting relayer",
+  pending: "Awaiting relayer",
   finalizing: "Finalizing…",
   success: "Done",
   error: "Try again",
@@ -50,8 +51,26 @@ export function UnwrapForm({ pairs, chainId }: Props) {
     await initiateUnwrap()
   }
 
+  const steps = [
+    {
+      label: "Encrypt & Submit",
+      active: state === "encrypting" || state === "requesting",
+      done: state === "pending" || state === "success",
+    },
+    {
+      label: "Relayer decrypts",
+      active: state === "pending",
+      done: state === "success",
+    },
+    {
+      label: "Finalize on-chain",
+      active: state === "finalizing",
+      done: state === "success",
+    },
+  ]
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
         <Label>Confidential Token</Label>
         <Select
@@ -76,20 +95,28 @@ export function UnwrapForm({ pairs, chainId }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label>Amount ({selectedPair?.wrapper.symbol ?? "—"})</Label>
-        <Input
-          type="number"
-          min="0"
-          step="any"
-          placeholder="0.0"
-          value={amount}
-          onChange={(e) => {
-            setAmount(e.target.value)
-            if (state !== "idle") reset()
-          }}
-        />
+        <Label>Amount</Label>
+        <div className="relative">
+          <Input
+            type="number"
+            min="0"
+            step="any"
+            placeholder="0.0"
+            value={amount}
+            onChange={(e) => {
+              setAmount(e.target.value)
+              if (state !== "idle") reset()
+            }}
+            className="pr-9"
+          />
+          <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+        </div>
         <p className="text-xs text-muted-foreground">
-          Your encrypted balance is not shown until you decrypt it on the Decrypt page.
+          Balance is encrypted.{" "}
+          <a href="/decrypt" className="text-primary hover:underline">
+            Decrypt it first
+          </a>{" "}
+          to see your balance.
         </p>
       </div>
 
@@ -99,15 +126,47 @@ export function UnwrapForm({ pairs, chainId }: Props) {
         </Alert>
       )}
 
+      {state !== "idle" && state !== "error" && (
+        <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
+          {steps.map((s, i) => (
+            <div key={s.label} className="flex items-center gap-3">
+              <span
+                className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                  s.done
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : s.active
+                    ? "bg-primary/20 text-primary"
+                    : "border border-border bg-muted text-muted-foreground"
+                }`}
+              >
+                {s.done ? "✓" : s.active ? "•" : i + 1}
+              </span>
+              <span
+                className={`text-sm ${
+                  s.done
+                    ? "text-emerald-400"
+                    : s.active
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {s.label}
+                {s.active && <span className="ml-1 animate-pulse">…</span>}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {state === "pending" && requestId && (
         <Alert>
           <AlertDescription className="space-y-1">
-            <p>
-              Unwrap requested.{" "}
-              <span className="font-mono text-xs">{requestId.slice(0, 20)}…</span>
+            <p className="text-sm">
+              Request ID:{" "}
+              <span className="font-mono text-xs text-muted-foreground">{requestId.slice(0, 20)}…</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              The request will appear in Pending Unwraps above. Come back to finalize once the relayer completes decryption (5–30 min).
+              Your request appears in Pending Unwraps above. Return to finalize once the relayer completes (5–30 min).
             </p>
           </AlertDescription>
         </Alert>
@@ -120,7 +179,7 @@ export function UnwrapForm({ pairs, chainId }: Props) {
             href={ethTx(chainId, finalizeTxHash)}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline"
+            className="underline hover:text-foreground"
           >
             {finalizeTxHash.slice(0, 10)}…
           </a>
@@ -129,6 +188,7 @@ export function UnwrapForm({ pairs, chainId }: Props) {
 
       <Button
         type="submit"
+        variant="outline"
         disabled={
           !address ||
           isLoading ||
@@ -137,7 +197,6 @@ export function UnwrapForm({ pairs, chainId }: Props) {
           state === "pending" ||
           state === "success"
         }
-        variant="outline"
         className="w-full"
       >
         {!address ? "Connect wallet" : STATE_LABELS[state] ?? "Unwrap"}

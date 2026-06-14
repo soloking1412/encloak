@@ -22,11 +22,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}>
       <body className="min-h-screen bg-background text-foreground">
         <Providers>
           <Header />
-          <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+          <main className="mx-auto max-w-7xl px-4 py-10">{children}</main>
         </Providers>
         <Toaster richColors position="bottom-right" />
       </body>

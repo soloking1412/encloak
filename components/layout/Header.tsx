@@ -1,52 +1,69 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
-import { useChainId } from "wagmi"
+import { useChainId, useAccount } from "wagmi"
 import { sepolia } from "wagmi/chains"
+import { Shield } from "lucide-react"
 import { NetworkSwitcher } from "./NetworkSwitcher"
 import { usePendingUnwraps } from "@/hooks/usePendingUnwraps"
-import { useAccount } from "wagmi"
 import { Badge } from "@/components/ui/badge"
 
+const NAV = [
+  { href: "/", label: "Registry" },
+  { href: "/wrap", label: "Wrap" },
+  { href: "/decrypt", label: "Decrypt" },
+]
+
 export function Header() {
+  const pathname = usePathname()
   const chainId = useChainId()
   const { address } = useAccount()
   const { mine } = usePendingUnwraps(address, chainId)
   const pendingCount = mine.filter((u) => u.status === "pending" || u.status === "ready").length
 
+  const links = chainId === sepolia.id ? [...NAV, { href: "/faucet", label: "Faucet" }] : NAV
+
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <span className="text-primary">CWR</span>
-            <span className="hidden text-sm text-muted-foreground sm:inline">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <Shield className="h-4 w-4" />
+            </div>
+            <span className="font-semibold tracking-tight">CWR</span>
+            <span className="hidden text-xs text-muted-foreground sm:block">
               Confidential Wrapper Registry
             </span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
-              Registry
-            </Link>
-            <Link href="/wrap" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-              Wrap
-              {pendingCount > 0 && (
-                <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[10px]">
-                  {pendingCount}
-                </Badge>
-              )}
-            </Link>
-            <Link href="/decrypt" className="text-muted-foreground hover:text-foreground transition-colors">
-              Decrypt
-            </Link>
-            {chainId === sepolia.id && (
-              <Link href="/faucet" className="text-muted-foreground hover:text-foreground transition-colors">
-                Faucet
-              </Link>
-            )}
+
+          <nav className="flex items-center gap-0.5 text-sm">
+            {links.map((link) => {
+              const isActive = pathname === link.href
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative rounded-md px-3 py-1.5 font-medium transition-colors flex items-center gap-1 ${
+                    isActive
+                      ? "text-foreground bg-muted"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  }`}
+                >
+                  {link.label}
+                  {link.label === "Wrap" && pendingCount > 0 && (
+                    <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] leading-none">
+                      {pendingCount}
+                    </Badge>
+                  )}
+                </Link>
+              )
+            })}
           </nav>
         </div>
+
         <div className="flex items-center gap-3">
           <NetworkSwitcher />
           <ConnectButton accountStatus="avatar" chainStatus="none" showBalance={false} />

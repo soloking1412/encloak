@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useAccount } from "wagmi"
 import { formatUnits } from "viem"
 import { toast } from "sonner"
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,21 +31,29 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
   const { address } = useAccount()
 
   const defaultPair =
-    pairs.find(
-      (p) =>
-        p.erc20.address.toLowerCase() === defaultToken?.toLowerCase()
-    ) ?? pairs[0] ?? null
+    pairs.find((p) => p.erc20.address.toLowerCase() === defaultToken?.toLowerCase()) ??
+    pairs[0] ??
+    null
 
   const [selectedPair, setSelectedPair] = useState<WrapperPair | null>(defaultPair)
   const [amount, setAmount] = useState("")
 
-  const { state, error, approveTxHash, wrapTxHash, erc20Balance, needsApproval, outputAmount, isLoading, execute, reset } =
-    useWrap(selectedPair, amount)
+  const {
+    state,
+    error,
+    approveTxHash,
+    wrapTxHash,
+    erc20Balance,
+    needsApproval,
+    outputAmount,
+    isLoading,
+    execute,
+    reset,
+  } = useWrap(selectedPair, amount)
 
   const setMax = () => {
-    if (erc20Balance && selectedPair) {
+    if (erc20Balance && selectedPair)
       setAmount(formatUnits(erc20Balance, selectedPair.erc20.decimals))
-    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,10 +66,7 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
     if (state === "success" || wrapTxHash) {
       toast.success("Wrapped successfully", {
         action: wrapTxHash
-          ? {
-              label: "View tx",
-              onClick: () => window.open(ethTx(chainId, wrapTxHash), "_blank"),
-            }
+          ? { label: "View tx", onClick: () => window.open(ethTx(chainId, wrapTxHash), "_blank") }
           : undefined,
       })
       setAmount("")
@@ -69,14 +75,14 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
   }
 
   const steps = [
-    { label: "Approve", done: state === "approved" || state === "wrapping" || state === "success" },
+    { label: "Approve", done: ["approved", "wrapping", "success"].includes(state) },
     { label: "Wrap", done: state === "success" },
   ]
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label>Token</Label>
+        <Label>Token pair</Label>
         <Select
           value={selectedPair?.erc20.address ?? ""}
           onValueChange={(v) => {
@@ -98,16 +104,36 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
         </Select>
       </div>
 
+      {selectedPair && (
+        <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+          <div className="flex items-center gap-3 text-sm">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">You send</p>
+              <p className="font-semibold truncate">{selectedPair.erc20.symbol}</p>
+              <p className="text-xs text-muted-foreground truncate">{selectedPair.erc20.name}</p>
+            </div>
+            <div className="shrink-0 h-7 w-7 rounded-full bg-border/80 flex items-center justify-center">
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0 text-right">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">You receive</p>
+              <p className="font-semibold text-primary truncate">{selectedPair.wrapper.symbol}</p>
+              <p className="text-xs text-muted-foreground truncate">{selectedPair.wrapper.name}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label>Amount ({selectedPair?.erc20.symbol ?? "—"})</Label>
+          <Label>Amount</Label>
           {erc20Balance !== undefined && selectedPair && (
             <button
               type="button"
               onClick={setMax}
-              className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+              className="text-xs text-primary hover:underline"
             >
-              Max: {formatTokenAmount(erc20Balance, selectedPair.erc20.decimals)}
+              Balance: {formatTokenAmount(erc20Balance, selectedPair.erc20.decimals)}
             </button>
           )}
         </div>
@@ -125,14 +151,12 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
         {selectedPair && amount && outputAmount !== undefined && (
           <p className="text-sm text-muted-foreground">
             You receive ≈{" "}
-            <span className="font-medium">
-              {formatTokenAmount(outputAmount, selectedPair.wrapper.decimals)}{" "}
-              {selectedPair.wrapper.symbol}
+            <span className="font-medium text-foreground">
+              {formatTokenAmount(outputAmount, selectedPair.wrapper.decimals)} {selectedPair.wrapper.symbol}
             </span>
             {outputAmount === 0n && (
-              <span className="text-destructive ml-2">
-                Amount too small — must be at least {selectedPair.rate.toString()}{" "}
-                {selectedPair.erc20.symbol}
+              <span className="text-destructive ml-2 text-xs">
+                Too small — min {selectedPair.rate.toString()} {selectedPair.erc20.symbol}
               </span>
             )}
           </p>
@@ -146,19 +170,24 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
       )}
 
       {(state === "approving" || state === "approved" || state === "wrapping" || state === "success") && (
-        <div className="flex gap-4">
-          {steps.map((s) => (
-            <div key={s.label} className="flex items-center gap-1.5 text-sm">
-              <span
-                className={`h-5 w-5 rounded-full flex items-center justify-center text-xs ${
-                  s.done
-                    ? "bg-green-500 text-white"
-                    : "border bg-muted text-muted-foreground"
-                }`}
-              >
-                {s.done ? "✓" : ""}
-              </span>
-              {s.label}
+        <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+          {steps.map((s, i) => (
+            <div key={s.label} className="flex items-center gap-2">
+              {i > 0 && <div className="h-px w-6 bg-border flex-shrink-0" />}
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                    s.done
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : "border border-border bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {s.done ? "✓" : i + 1}
+                </span>
+                <span className={`text-sm ${s.done ? "text-emerald-400" : "text-muted-foreground"}`}>
+                  {s.label}
+                </span>
+              </div>
             </div>
           ))}
         </div>
@@ -171,7 +200,7 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
             href={ethTx(chainId, approveTxHash)}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline"
+            className="underline hover:text-foreground"
           >
             {approveTxHash.slice(0, 10)}…
           </a>
@@ -190,7 +219,7 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
             ? "Approving…"
             : "Wrapping…"
           : needsApproval
-          ? `Approve & Wrap`
+          ? "Approve & Wrap"
           : "Wrap"}
       </Button>
     </form>

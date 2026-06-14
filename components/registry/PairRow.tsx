@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { Copy, ArrowRight } from "lucide-react"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,12 +12,33 @@ import { truncateAddress, formatRate, formatTVS, formatTokenAmount } from "@/lib
 import { etherscanAddr } from "@/lib/contracts/addresses"
 import type { WrapperPair } from "@/types"
 
-interface Props {
-  pair: WrapperPair
-  chainId: number
+const AVATAR_PALETTE = [
+  "bg-violet-500/15 text-violet-400",
+  "bg-blue-500/15 text-blue-400",
+  "bg-emerald-500/15 text-emerald-400",
+  "bg-amber-500/15 text-amber-400",
+  "bg-rose-500/15 text-rose-400",
+  "bg-cyan-500/15 text-cyan-400",
+  "bg-orange-500/15 text-orange-400",
+  "bg-pink-500/15 text-pink-400",
+]
+
+function symbolColor(symbol: string) {
+  let h = 0
+  for (let i = 0; i < symbol.length; i++) h = (h * 31 + symbol.charCodeAt(i)) | 0
+  return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length]
 }
 
-function CopyAddr({ address, chainId }: { address: string; chainId: number }) {
+function TokenAvatar({ symbol }: { symbol: string }) {
+  const initials = symbol.replace(/^c/, "").slice(0, 3).toUpperCase()
+  return (
+    <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${symbolColor(symbol)}`}>
+      {initials}
+    </div>
+  )
+}
+
+function AddrLink({ address, chainId }: { address: string; chainId: number }) {
   const [copied, setCopied] = useState(false)
   const copy = () => {
     navigator.clipboard.writeText(address)
@@ -25,148 +46,159 @@ function CopyAddr({ address, chainId }: { address: string; chainId: number }) {
     setTimeout(() => setCopied(false), 1500)
   }
   return (
-    <span className="flex items-center gap-1">
+    <span className="flex items-center gap-0.5">
       <a
         href={etherscanAddr(chainId, address)}
         target="_blank"
         rel="noopener noreferrer"
-        className="font-mono text-xs text-blue-600 hover:underline dark:text-blue-400"
+        className="font-mono text-xs text-primary/70 hover:text-primary transition-colors"
       >
         {truncateAddress(address)}
       </a>
       <button
         onClick={copy}
-        className="text-muted-foreground hover:text-foreground text-xs"
+        className="rounded p-0.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
         title="Copy address"
       >
-        {copied ? "✓" : "⧉"}
+        {copied
+          ? <span className="text-emerald-500 text-[10px]">✓</span>
+          : <Copy className="h-2.5 w-2.5" />}
       </button>
     </span>
   )
 }
 
-export function PairRow({ pair, chainId }: Props) {
+export function PairRow({ pair, chainId }: { pair: WrapperPair; chainId: number }) {
   const router = useRouter()
   const { balances, loading, errors, decrypt } = useDecryptBalance()
   const [rateOpen, setRateOpen] = useState(false)
 
   const key = pair.wrapper.address.toLowerCase()
-  const decryptedBalance = balances[key]
-  const isDecrypting = loading[key]
-  const decryptError = errors[key]
-
-  const handleDecrypt = () => {
-    decrypt(pair.wrapper.address, chainId)
-  }
 
   return (
     <>
-      <TableRow>
+      <TableRow className="group hover:bg-muted/30 transition-colors">
         <TableCell>
-          <div className="flex flex-col gap-0.5">
-            <span className="font-medium">{pair.wrapper.symbol}</span>
-            <span className="text-xs text-muted-foreground">{pair.wrapper.name}</span>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground w-14">ERC-20</span>
-              <CopyAddr address={pair.erc20.address} chainId={chainId} />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground w-14">Wrapper</span>
-              <CopyAddr address={pair.wrapper.address} chainId={chainId} />
+          <div className="flex items-center gap-2.5">
+            <TokenAvatar symbol={pair.wrapper.symbol} />
+            <div className="min-w-0">
+              <p className="font-medium text-sm leading-tight">{pair.wrapper.symbol}</p>
+              <p className="text-xs text-muted-foreground leading-tight truncate max-w-28">
+                {pair.erc20.symbol}
+              </p>
             </div>
           </div>
         </TableCell>
+
+        <TableCell>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground/60 w-9 shrink-0">ERC-20</span>
+              <AddrLink address={pair.erc20.address} chainId={chainId} />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground/60 w-9 shrink-0">cToken</span>
+              <AddrLink address={pair.wrapper.address} chainId={chainId} />
+            </div>
+          </div>
+        </TableCell>
+
         <TableCell>
           <button
             onClick={() => setRateOpen(true)}
-            className="text-sm hover:underline cursor-pointer"
+            className="font-mono text-sm hover:text-primary transition-colors"
             title="View rate details"
           >
             {formatRate(pair.rate)}
           </button>
         </TableCell>
-        <TableCell className="font-mono text-sm">
-          {formatTVS(pair.inferredTotalSupply, pair.wrapper.decimals)}{" "}
-          <span className="text-muted-foreground text-xs">{pair.wrapper.symbol}</span>
-        </TableCell>
+
         <TableCell>
-          {decryptedBalance !== undefined ? (
-            <span className="font-mono text-sm text-green-600 dark:text-green-400">
-              {formatTokenAmount(decryptedBalance, pair.wrapper.decimals)}{" "}
+          <span className="font-mono text-sm">
+            {formatTVS(pair.inferredTotalSupply, pair.wrapper.decimals)}
+          </span>
+          <span className="text-muted-foreground text-xs ml-1">{pair.wrapper.symbol}</span>
+        </TableCell>
+
+        <TableCell>
+          {balances[key] !== undefined ? (
+            <span className="font-mono text-sm text-emerald-400">
+              {formatTokenAmount(balances[key], pair.wrapper.decimals)}{" "}
               <span className="text-xs text-muted-foreground">{pair.wrapper.symbol}</span>
             </span>
-          ) : decryptError ? (
-            <span className="text-xs text-destructive">{decryptError}</span>
+          ) : errors[key] ? (
+            <span className="text-xs text-destructive max-w-32 block">{errors[key]}</span>
           ) : (
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleDecrypt}
-              disabled={isDecrypting}
+              className="h-7 text-xs"
+              onClick={() => decrypt(pair.wrapper.address, chainId)}
+              disabled={loading[key]}
             >
-              {isDecrypting ? "Decrypting…" : "Decrypt"}
+              {loading[key] ? "Decrypting…" : "Decrypt"}
             </Button>
           )}
         </TableCell>
+
         <TableCell>
-          <div className="flex items-center gap-1">
-            <Badge variant={pair.source === "onchain" ? "default" : "secondary"}>
-              {pair.source}
-            </Badge>
-          </div>
+          <Badge
+            variant={pair.source === "onchain" ? "default" : "secondary"}
+            className="text-[10px] h-5"
+          >
+            {pair.source}
+          </Badge>
         </TableCell>
+
         <TableCell>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={() =>
-                router.push(`/wrap?token=${pair.erc20.address}&chainId=${chainId}`)
-              }
-            >
-              Wrap
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={() => router.push(`/wrap?token=${pair.erc20.address}`)}
+          >
+            Wrap
+          </Button>
         </TableCell>
       </TableRow>
 
       <Dialog open={rateOpen} onOpenChange={setRateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{pair.wrapper.symbol} — Rate & Decimals</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <TokenAvatar symbol={pair.wrapper.symbol} />
+              {pair.wrapper.symbol} — Rate & Decimals
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-sm">
-            <div className="rounded-lg border p-4 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Conversion rate</span>
-                <span className="font-mono">{pair.rate.toString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">ERC-20 decimals</span>
-                <span className="font-mono">{pair.erc20.decimals}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Wrapper decimals</span>
-                <span className="font-mono">{pair.wrapper.decimals}</span>
-              </div>
+            <div className="rounded-lg border border-border/60 divide-y divide-border/60">
+              {[
+                ["Conversion rate", pair.rate.toString()],
+                ["ERC-20 decimals", pair.erc20.decimals],
+                ["Wrapper decimals", pair.wrapper.decimals],
+              ].map(([label, val]) => (
+                <div key={String(label)} className="flex justify-between px-4 py-2.5">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="font-mono">{String(val)}</span>
+                </div>
+              ))}
             </div>
-            <div className="rounded-lg bg-muted p-4 space-y-2">
-              <p className="font-medium">Example</p>
-              <p className="text-muted-foreground">
-                Wrapping{" "}
-                <code className="bg-background px-1 rounded">
+            <div className="rounded-lg bg-muted/40 p-4 space-y-2">
+              <p className="font-medium text-sm flex items-center gap-1.5">
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                Example conversion
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Wrap{" "}
+                <code className="bg-background px-1.5 py-0.5 rounded text-foreground font-mono text-xs">
                   {pair.rate.toString()} {pair.erc20.symbol}
                 </code>{" "}
-                yields{" "}
-                <code className="bg-background px-1 rounded">
+                to receive{" "}
+                <code className="bg-background px-1.5 py-0.5 rounded text-primary font-mono text-xs">
                   1 {pair.wrapper.symbol}
                 </code>
               </p>
-              <p className="text-muted-foreground text-xs">
-                Amounts are truncated to the nearest rate multiple. Remainder is not wrapped.
+              <p className="text-xs text-muted-foreground">
+                Amounts truncate to the nearest rate multiple — any remainder is not wrapped.
               </p>
             </div>
           </div>

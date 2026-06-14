@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi"
 import { parseUnits } from "viem"
 import { toast } from "sonner"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowRight, Droplets } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ERC20ABI } from "@/lib/contracts/abis"
 import { etherscanTx as ethTx } from "@/lib/contracts/addresses"
@@ -14,6 +15,21 @@ import { timeAgo, truncateAddress } from "@/lib/format"
 const FAUCET_KEY = "zama_faucet_claims"
 const CLAIM_AMOUNT = "1000"
 const CHAIN_ID = 11155111
+
+const AVATAR_PALETTE = [
+  "bg-violet-500/15 text-violet-400",
+  "bg-blue-500/15 text-blue-400",
+  "bg-emerald-500/15 text-emerald-400",
+  "bg-amber-500/15 text-amber-400",
+  "bg-rose-500/15 text-rose-400",
+  "bg-cyan-500/15 text-cyan-400",
+]
+
+function symbolColor(symbol: string) {
+  let h = 0
+  for (let i = 0; i < symbol.length; i++) h = (h * 31 + symbol.charCodeAt(i)) | 0
+  return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length]
+}
 
 interface FaucetEntry {
   walletAddress: string
@@ -34,8 +50,10 @@ function saveClaim(wallet: string, erc20: string) {
   if (typeof window === "undefined") return
   const existing = loadClaims().filter(
     (c) =>
-      !(c.walletAddress.toLowerCase() === wallet.toLowerCase() &&
-        c.erc20Address.toLowerCase() === erc20.toLowerCase())
+      !(
+        c.walletAddress.toLowerCase() === wallet.toLowerCase() &&
+        c.erc20Address.toLowerCase() === erc20.toLowerCase()
+      )
   )
   localStorage.setItem(
     FAUCET_KEY,
@@ -102,38 +120,46 @@ export function FaucetCard({ symbol, name, erc20Address, wrapperAddress, decimal
     }
   }
 
+  const initials = symbol.replace(/Mock$/, "").replace(/^c/, "").slice(0, 3).toUpperCase()
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between text-base">
-          <span>{symbol}</span>
-          <span className="text-xs font-normal text-muted-foreground">{name}</span>
-        </CardTitle>
+    <Card className="border-border/60 hover:border-border transition-colors">
+      <CardHeader className="pb-3 pt-4 px-4">
+        <div className="flex items-center gap-3">
+          <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${symbolColor(symbol)}`}>
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-sm leading-tight">{symbol}</p>
+            <p className="text-xs text-muted-foreground truncate">{name}</p>
+          </div>
+          <Droplets className="h-4 w-4 text-muted-foreground/40 ml-auto shrink-0" />
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-xs text-muted-foreground space-y-0.5">
-          <p>
-            ERC-20:{" "}
+      <CardContent className="space-y-3 px-4 pb-4">
+        <div className="space-y-1 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between">
+            <span>ERC-20</span>
             <a
               href={`https://sepolia.etherscan.io/address/${erc20Address}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono hover:underline text-blue-600 dark:text-blue-400"
+              className="font-mono hover:text-primary transition-colors"
             >
               {truncateAddress(erc20Address)}
             </a>
-          </p>
-          <p>
-            Wrapper:{" "}
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Wrapper</span>
             <a
               href={`https://sepolia.etherscan.io/address/${wrapperAddress}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono hover:underline text-blue-600 dark:text-blue-400"
+              className="font-mono hover:text-primary transition-colors"
             >
               {truncateAddress(wrapperAddress)}
             </a>
-          </p>
+          </div>
         </div>
 
         {lastClaim && (
@@ -144,20 +170,21 @@ export function FaucetCard({ symbol, name, erc20Address, wrapperAddress, decimal
 
         <div className="flex gap-2">
           <Button
-            className="flex-1"
+            className="flex-1 h-8 text-xs"
             onClick={handleClaim}
             disabled={confirming || !address}
           >
-            {confirming ? "Claiming…" : `Claim ${CLAIM_AMOUNT} ${symbol}`}
+            {confirming ? "Claiming…" : `Claim ${CLAIM_AMOUNT}`}
           </Button>
           {claimed && (
             <Button
               variant="outline"
-              onClick={() =>
-                router.push(`/wrap?token=${erc20Address}&chainId=${CHAIN_ID}`)
-              }
+              size="sm"
+              className="h-8 text-xs gap-1"
+              onClick={() => router.push(`/wrap?token=${erc20Address}`)}
             >
-              Wrap →
+              Wrap
+              <ArrowRight className="h-3 w-3" />
             </Button>
           )}
         </div>

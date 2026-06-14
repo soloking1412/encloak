@@ -1,13 +1,8 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Search } from "lucide-react"
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { PairRow } from "./PairRow"
 import type { WrapperPair } from "@/types"
@@ -35,9 +30,9 @@ export function RegistryTable({ pairs, chainId, isLoading }: Props) {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />
+          <div key={i} className="h-14 rounded-lg bg-muted/40 animate-pulse" style={{ opacity: 1 - i * 0.15 }} />
         ))}
       </div>
     )
@@ -45,31 +40,35 @@ export function RegistryTable({ pairs, chainId, isLoading }: Props) {
 
   if (!pairs.length) {
     return (
-      <div className="rounded-lg border border-dashed p-12 text-center">
-        <p className="text-muted-foreground">No wrapper pairs found on this network.</p>
+      <div className="rounded-xl border border-dashed border-border/60 p-16 text-center">
+        <p className="text-muted-foreground text-sm">No wrapper pairs found on this network.</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="Filter by symbol or address…"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className="max-w-sm"
-      />
-      <div className="rounded-lg border overflow-x-auto">
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          placeholder="Filter by symbol or address…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      <div className="rounded-xl border border-border/60 overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Token</TableHead>
-              <TableHead>Addresses</TableHead>
-              <TableHead>Rate</TableHead>
-              <TableHead>TVS</TableHead>
-              <TableHead>Your Balance</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Actions</TableHead>
+            <TableRow className="border-b border-border/60 hover:bg-transparent">
+              <TableHead className="text-xs font-medium">Token</TableHead>
+              <TableHead className="text-xs font-medium">Addresses</TableHead>
+              <TableHead className="text-xs font-medium">Rate</TableHead>
+              <TableHead className="text-xs font-medium">TVS</TableHead>
+              <TableHead className="text-xs font-medium">Your Balance</TableHead>
+              <TableHead className="text-xs font-medium">Source</TableHead>
+              <TableHead className="text-xs font-medium"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -79,8 +78,9 @@ export function RegistryTable({ pairs, chainId, isLoading }: Props) {
           </TableBody>
         </Table>
       </div>
+
       {filter && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {filtered.length} of {pairs.length} pairs
         </p>
       )}

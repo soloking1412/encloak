@@ -1,15 +1,16 @@
 "use client"
 
+import { useMemo } from "react"
 import { useChainId } from "wagmi"
-import { sepolia, mainnet } from "wagmi/chains"
+import { sepolia } from "wagmi/chains"
 import { useSwitchChain } from "wagmi"
+import { Droplets } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { FaucetCard } from "@/components/faucet/FaucetCard"
 import { SEPOLIA_PAIRS } from "@/lib/contracts/addresses"
 import { useReadContracts } from "wagmi"
 import { ERC20ABI } from "@/lib/contracts/abis"
-import { useMemo } from "react"
 
 export default function FaucetPage() {
   const chainId = useChainId()
@@ -34,11 +35,14 @@ export default function FaucetPage() {
   if (chainId !== sepolia.id) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Faucet</h1>
-          <p className="text-muted-foreground mt-1">
-            Claim Sepolia test tokens to try the wrap/unwrap flow.
-          </p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <Droplets className="h-3.5 w-3.5" />
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight">Faucet</h1>
+          </div>
+          <p className="text-muted-foreground text-sm">Claim Sepolia test tokens to try the wrap/unwrap flow.</p>
         </div>
         <Alert>
           <AlertDescription className="flex items-center justify-between flex-wrap gap-3">
@@ -54,14 +58,19 @@ export default function FaucetPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Faucet</h1>
-        <p className="text-muted-foreground mt-1">
-          Claim 1,000 of each cTokenMock to try wrapping on Sepolia. Tokens are minted on demand — no daily limit.
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <Droplets className="h-3.5 w-3.5" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">Faucet</h1>
+        </div>
+        <p className="text-muted-foreground text-sm">
+          Claim 1,000 of each cTokenMock to try wrapping on Sepolia. No daily limit — mint on demand.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {mockPairs.map((pair, i) => {
           const nameResult = metadata?.[i * 2]?.result
           const decimalsResult = metadata?.[i * 2 + 1]?.result
