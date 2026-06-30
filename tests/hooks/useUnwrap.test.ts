@@ -3,40 +3,30 @@ import { renderHook, act } from "@testing-library/react"
 import type { WrapperPair } from "@/types"
 
 vi.mock("wagmi", () => ({
-  useWriteContract: vi.fn(),
-  useWaitForTransactionReceipt: vi.fn(),
   useAccount: vi.fn(),
   usePublicClient: vi.fn(),
+  useWalletClient: vi.fn(),
 }))
 
 vi.mock("@/lib/sdk", () => ({
   getZamaSDK: vi.fn(),
-  resetSDK: vi.fn(),
+  requestUnwrap: vi.fn(),
+  finalizeUnwrap: vi.fn(),
 }))
 
 vi.mock("@/hooks/usePendingUnwraps", () => ({
   usePendingUnwraps: vi.fn(),
 }))
 
-import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicClient } from "wagmi"
-import { getZamaSDK } from "@/lib/sdk"
+import { useAccount, usePublicClient, useWalletClient } from "wagmi"
+import { getZamaSDK, requestUnwrap, finalizeUnwrap } from "@/lib/sdk"
 import { usePendingUnwraps } from "@/hooks/usePendingUnwraps"
 import { useUnwrap } from "@/hooks/useUnwrap"
 
 const PAIR: WrapperPair = {
   chainId: 11155111,
-  erc20: {
-    address: "0xERC20000000000000000000000000000000000000",
-    name: "Mock USDC",
-    symbol: "USDCMock",
-    decimals: 6,
-  },
-  wrapper: {
-    address: "0xWRAPPER00000000000000000000000000000000000",
-    name: "cUSDCMock",
-    symbol: "cUSDCMock",
-    decimals: 6,
-  },
+  erc20: { address: "0xERC20000000000000000000000000000000000000", name: "Mock USDC", symbol: "USDCMock", decimals: 6 },
+  wrapper: { address: "0xWRAPPER00000000000000000000000000000000000", name: "cUSDCMock", symbol: "cUSDCMock", decimals: 6 },
   rate: 1n,
   inferredTotalSupply: 0n,
   isValid: true,
@@ -44,27 +34,22 @@ const PAIR: WrapperPair = {
 }
 
 const MOCK_ADD = vi.fn()
-const WRITE_ASYNC = vi.fn()
+const SDK = { id: "sdk" }
 
 beforeEach(() => {
   vi.clearAllMocks()
 
   vi.mocked(useAccount).mockReturnValue({
     address: "0xUser000000000000000000000000000000000000" as `0x${string}`,
-    connector: { getProvider: vi.fn().mockResolvedValue({}) },
   } as unknown as ReturnType<typeof useAccount>)
 
-  vi.mocked(useWriteContract).mockReturnValue({
-    writeContractAsync: WRITE_ASYNC,
-  } as unknown as ReturnType<typeof useWriteContract>)
+  vi.mocked(usePublicClient).mockReturnValue({} as unknown as ReturnType<typeof usePublicClient>)
 
-  vi.mocked(useWaitForTransactionReceipt).mockReturnValue({
-    isLoading: false,
-  } as ReturnType<typeof useWaitForTransactionReceipt>)
+  vi.mocked(useWalletClient).mockReturnValue({
+    data: { account: { address: "0xUser000000000000000000000000000000000000" } },
+  } as unknown as ReturnType<typeof useWalletClient>)
 
-  vi.mocked(usePublicClient).mockReturnValue({
-    waitForTransactionReceipt: vi.fn().mockResolvedValue({ logs: [] }),
-  } as unknown as ReturnType<typeof usePublicClient>)
+  vi.mocked(getZamaSDK).mockResolvedValue(SDK as never)
 
   vi.mocked(usePendingUnwraps).mockReturnValue({
     mine: [],
@@ -90,86 +75,68 @@ describe("useUnwrap — initial state", () => {
 
 describe("useUnwrap — initiateUnwrap", () => {
   it("does nothing when no wallet is connected", async () => {
-    vi.mocked(useAccount).mockReturnValue({
-      address: undefined,
-      connector: undefined,
-    } as unknown as ReturnType<typeof useAccount>)
+    vi.mocked(useAccount).mockReturnValue({ address: undefined } as unknown as ReturnType<typeof useAccount>)
 
     const { result } = renderHook(() => useUnwrap(PAIR, "100"))
-
     await act(async () => {
       await result.current.initiateUnwrap()
     })
 
-    expect(getZamaSDK).not.toHaveBeenCalled()
+    expect(requestUnwrap).not.toHaveBeenCalled()
     expect(result.current.state).toBe("idle")
   })
 
   it("does nothing when amount is 0", async () => {
     const { result } = renderHook(() => useUnwrap(PAIR, "0"))
-
     await act(async () => {
       await result.current.initiateUnwrap()
     })
 
-    expect(getZamaSDK).not.toHaveBeenCalled()
+    expect(requestUnwrap).not.toHaveBeenCalled()
     expect(result.current.state).toBe("idle")
   })
 
   it("does nothing when pair is null", async () => {
     const { result } = renderHook(() => useUnwrap(null, "100"))
-
     await act(async () => {
       await result.current.initiateUnwrap()
     })
 
-    expect(getZamaSDK).not.toHaveBeenCalled()
+    expect(requestUnwrap).not.toHaveBeenCalled()
   })
 
-  it("transitions to encrypting then requesting then pending on success", async () => {
-    const TX_HASH = "0xUnwrapTx" as `0x${string}`
-    const MOCK_REQUEST_ID = "0xRequestId111" as `0x${string}`
-
-    const mockUnshield = vi.fn().mockResolvedValue(TX_HASH)
-    vi.mocked(getZamaSDK).mockResolvedValue({
-      createToken: vi.fn().mockReturnValue({ unshield: mockUnshield }),
-    } as unknown as Awaited<ReturnType<typeof getZamaSDK>>)
-
-    vi.mocked(usePublicClient).mockReturnValue({
-      waitForTransactionReceipt: vi.fn().mockResolvedValue({
-        logs: [
-          {
-            data: "0x0000000000000000000000000000000000000000000000000000000000000001",
-            topics: [
-              "0x0000000000000000000000000000000000000000000000000000000000000000",
-              "0x000000000000000000000000User00000000000000000000000000000000",
-              MOCK_REQUEST_ID,
-            ],
-          },
-        ],
-      }),
-    } as unknown as ReturnType<typeof usePublicClient>)
+  it("requests the unwrap, persists a pending entry, and transitions to pending", async () => {
+    vi.mocked(requestUnwrap).mockResolvedValue({
+      unwrapTxHash: "0xUnwrapTx" as `0x${string}`,
+      burnHandle: "0xBurnHandle" as `0x${string}`,
+      requestId: "0xRequestId" as `0x${string}`,
+    })
 
     const { result } = renderHook(() => useUnwrap(PAIR, "100"))
-
     await act(async () => {
       await result.current.initiateUnwrap()
     })
 
     expect(getZamaSDK).toHaveBeenCalled()
-    expect(mockUnshield).toHaveBeenCalled()
+    expect(requestUnwrap).toHaveBeenCalledWith(SDK, PAIR.wrapper.address, 100_000_000n)
+    expect(MOCK_ADD).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestId: "0xRequestId",
+        burnHandle: "0xBurnHandle",
+        unwrapTxHash: "0xUnwrapTx",
+        wrapperAddress: PAIR.wrapper.address,
+        wrapperSymbol: "cUSDCMock",
+        status: "pending",
+      })
+    )
     expect(result.current.state).toBe("pending")
+    expect(result.current.requestId).toBe("0xRequestId")
   })
 
-  it("sets error state when SDK throws", async () => {
-    vi.mocked(getZamaSDK).mockResolvedValue({
-      createToken: vi.fn().mockReturnValue({
-        unshield: vi.fn().mockRejectedValue(new Error("SDK error")),
-      }),
-    } as unknown as Awaited<ReturnType<typeof getZamaSDK>>)
+  it("sets error state when the SDK throws", async () => {
+    vi.mocked(requestUnwrap).mockRejectedValue(new Error("SDK error"))
 
     const { result } = renderHook(() => useUnwrap(PAIR, "100"))
-
     await act(async () => {
       await result.current.initiateUnwrap()
     })
@@ -178,15 +145,10 @@ describe("useUnwrap — initiateUnwrap", () => {
     expect(result.current.error).toContain("SDK error")
   })
 
-  it("sets 'Transaction rejected' when user rejects the signature", async () => {
-    vi.mocked(getZamaSDK).mockResolvedValue({
-      createToken: vi.fn().mockReturnValue({
-        unshield: vi.fn().mockRejectedValue(new Error("User rejected the request")),
-      }),
-    } as unknown as Awaited<ReturnType<typeof getZamaSDK>>)
+  it("maps a user rejection to 'Transaction rejected'", async () => {
+    vi.mocked(requestUnwrap).mockRejectedValue(new Error("User rejected the request"))
 
     const { result } = renderHook(() => useUnwrap(PAIR, "100"))
-
     await act(async () => {
       await result.current.initiateUnwrap()
     })
@@ -195,61 +157,45 @@ describe("useUnwrap — initiateUnwrap", () => {
   })
 })
 
-describe("useUnwrap — finalizeUnwrap", () => {
-  it("calls writeContractAsync with correct args and transitions to success", async () => {
-    const FINALIZE_HASH = "0xFinalizeHash" as `0x${string}`
-    WRITE_ASYNC.mockResolvedValue(FINALIZE_HASH)
-
-    const REQUEST_ID = "0xReqId" as `0x${string}`
-    const CLEAR_AMOUNT = 1_000_000n
-    const PROOF = "0xProof" as `0x${string}`
+describe("useUnwrap — finalize", () => {
+  it("calls finalizeUnwrap with the wrapper address and burn handle and returns the tx hash", async () => {
+    vi.mocked(finalizeUnwrap).mockResolvedValue("0xFinalizeHash" as `0x${string}`)
 
     const { result } = renderHook(() => useUnwrap(PAIR, "1"))
 
+    let hash: string | undefined
     await act(async () => {
-      await result.current.finalizeUnwrap(REQUEST_ID, CLEAR_AMOUNT, PROOF)
+      hash = await result.current.finalize(
+        PAIR.wrapper.address,
+        "0xBurnHandle" as `0x${string}`,
+        11155111
+      )
     })
 
-    expect(WRITE_ASYNC).toHaveBeenCalledWith(
-      expect.objectContaining({
-        address: PAIR.wrapper.address,
-        functionName: "finalizeUnwrap",
-        args: [REQUEST_ID, CLEAR_AMOUNT, PROOF],
-      })
-    )
-
-    expect(result.current.state).toBe("success")
-    expect(result.current.finalizeTxHash).toBe(FINALIZE_HASH)
+    expect(finalizeUnwrap).toHaveBeenCalledWith(SDK, PAIR.wrapper.address, "0xBurnHandle")
+    expect(hash).toBe("0xFinalizeHash")
+    expect(result.current.finalizeTxHash).toBe("0xFinalizeHash")
   })
 
-  it("sets error when finalize transaction is rejected", async () => {
-    WRITE_ASYNC.mockRejectedValue(new Error("User rejected the request"))
+  it("propagates finalize errors to the caller", async () => {
+    vi.mocked(finalizeUnwrap).mockRejectedValue(new Error("Not ready"))
 
     const { result } = renderHook(() => useUnwrap(PAIR, "1"))
 
-    await act(async () => {
-      await result.current.finalizeUnwrap("0xReq" as `0x${string}`, 1n, "0xProof" as `0x${string}`)
-    })
-
-    expect(result.current.state).toBe("error")
-    expect(result.current.error).toBe("Transaction rejected")
+    await expect(
+      result.current.finalize(PAIR.wrapper.address, "0xBurnHandle" as `0x${string}`, 11155111)
+    ).rejects.toThrow("Not ready")
   })
 })
 
 describe("useUnwrap — reset", () => {
   it("returns to idle and clears error", async () => {
-    vi.mocked(getZamaSDK).mockResolvedValue({
-      createToken: vi.fn().mockReturnValue({
-        unshield: vi.fn().mockRejectedValue(new Error("fail")),
-      }),
-    } as unknown as Awaited<ReturnType<typeof getZamaSDK>>)
+    vi.mocked(requestUnwrap).mockRejectedValue(new Error("fail"))
 
     const { result } = renderHook(() => useUnwrap(PAIR, "100"))
-
     await act(async () => {
       await result.current.initiateUnwrap()
     })
-
     expect(result.current.state).toBe("error")
 
     act(() => {

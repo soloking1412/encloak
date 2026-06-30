@@ -9,7 +9,10 @@ const CHAIN_ID = 11155111
 function makePending(overrides?: Partial<PendingUnwrap>): PendingUnwrap {
   return {
     requestId: "0xrequest1" as `0x${string}`,
+    burnHandle: "0xburnhandle1" as `0x${string}`,
+    unwrapTxHash: "0xunwraptx1" as `0x${string}`,
     wrapperAddress: "0xwrapper1" as `0x${string}`,
+    wrapperSymbol: "cUSDCMock",
     chainId: CHAIN_ID,
     walletAddress: WALLET,
     timestamp: Date.now(),
@@ -58,10 +61,10 @@ describe("usePendingUnwraps", () => {
     })
 
     act(() => {
-      result.current.update("0xrequest1" as `0x${string}`, { status: "ready" })
+      result.current.update("0xrequest1" as `0x${string}`, { status: "finalizing" })
     })
 
-    expect(result.current.mine[0].status).toBe("ready")
+    expect(result.current.mine[0].status).toBe("finalizing")
   })
 
   it("removes an item by requestId", () => {
@@ -82,11 +85,11 @@ describe("usePendingUnwraps", () => {
 
     act(() => {
       result.current.add(makePending({ status: "pending" }))
-      result.current.add(makePending({ status: "ready" }))
+      result.current.add(makePending({ status: "finalizing" }))
     })
 
     expect(result.current.mine).toHaveLength(1)
-    expect(result.current.mine[0].status).toBe("ready")
+    expect(result.current.mine[0].status).toBe("finalizing")
   })
 
   it("filters out items from other wallets", () => {

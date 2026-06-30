@@ -17,11 +17,14 @@ export interface WrapperPair {
 
 export interface PendingUnwrap {
   requestId: `0x${string}`
+  burnHandle: `0x${string}`
+  unwrapTxHash: `0x${string}`
   wrapperAddress: `0x${string}`
+  wrapperSymbol: string
   chainId: number
   walletAddress: `0x${string}`
   timestamp: number
-  status: "pending" | "ready" | "finalizing" | "done"
+  status: "pending" | "finalizing" | "done"
 }
 
 export interface CustomPair {

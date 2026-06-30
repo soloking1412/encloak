@@ -19,8 +19,8 @@ Built for the [Zama Developer Program Bounty Season 3](https://www.zama.org/deve
 
 - **Registry browser** — reads `getTokenConfidentialTokenPairs()` from the onchain Wrappers Registry. Shows all valid pairs with token metadata, conversion rate, and TVS (inferred total supply).
 - **Wrap** — ERC-20 `approve` → wrapper `wrap` with live rate preview and approval step tracking.
-- **Unwrap** — two-step: initiates via Zama SDK `unshield()`, persists the `unwrapRequestId` in localStorage, and lets you finalize after relayer decryption completes.
-- **Decrypt** — EIP-712 user decryption via Zama SDK `balanceOf()`. Works for all registry tokens and any arbitrary ERC-7984 address.
+- **Unwrap** — two-step async flow. Step 1 calls the Zama SDK `Token.unwrap()` and captures the `UnwrapRequested` event's encrypted-amount handle, persisting it to localStorage. Step 2 calls `Token.finalizeUnwrap(handle)` once the relayer has run the public decryption — survives page reloads.
+- **Decrypt** — EIP-712 user decryption via the Zama SDK `ReadonlyToken.balanceOf()`. Works for all registry tokens and any arbitrary ERC-7984 address.
 - **Faucet** (Sepolia only) — mint 1,000 of each cTokenMock directly to your wallet.
 - **Pending unwraps tracker** — nav badge + panel showing all in-flight unwrap requests across sessions.
 - **Add pair validator** — paste any ERC-20 + wrapper address to validate and generate the config snippet.
@@ -63,7 +63,7 @@ You can also use the **Add Pair Validator** UI on the Wrap page (`/wrap`) to val
 
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your RPC URLs and relayer endpoints
+# .env.local is entirely optional — leave it empty to use public defaults
 npm install
 npm run dev
 ```
@@ -72,15 +72,17 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
+Every variable is **optional** — the app runs out of the box on Sepolia.
+
 | Variable | Required | Description |
 |---|---|---|
-| `NEXT_PUBLIC_SEPOLIA_RPC` | Yes | Sepolia JSON-RPC endpoint |
-| `NEXT_PUBLIC_MAINNET_RPC` | Yes | Mainnet JSON-RPC endpoint |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Yes | WalletConnect Cloud project ID |
-| `SEPOLIA_RELAYER_URL` | Yes | Zama relayer URL for Sepolia (server-side only) |
-| `MAINNET_RELAYER_URL` | Yes | Zama relayer URL for Mainnet (server-side only) |
+| `NEXT_PUBLIC_SEPOLIA_RPC` | No | Custom Sepolia JSON-RPC endpoint (falls back to a public node) |
+| `NEXT_PUBLIC_MAINNET_RPC` | No | Custom Mainnet JSON-RPC endpoint (falls back to a public node) |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | No | WalletConnect Cloud project ID — only for the WalletConnect modal; injected wallets work without it |
 
-Relayer URLs are available from the Zama Discord `#developer-program` channel.
+There is **no relayer URL or API key to configure**. The Zama SDK ships with the
+public relayer endpoints (`relayer.testnet.zama.org` for Sepolia,
+`relayer.mainnet.zama.org` for Mainnet) and uses them directly from the browser.
 
 ## Contract Addresses
 
@@ -114,10 +116,10 @@ Relayer URLs are available from the Zama Discord `#developer-program` channel.
 ```
 Browser
   └─ Next.js App Router
-       ├─ wagmi / viem  ──────────────────── Onchain reads & writes
-       ├─ @zama-fhe/react-sdk ─────────────── FHE encryption, decrypt, unshield
-       ├─ /api/relayer/[chainId]  ─────────── Server proxy (keeps relayer URL secret)
-       └─ config/customPairs.ts  ─────────── Extensibility point
+       ├─ wagmi / viem  ──────────────────── Onchain reads (registry multicall) & writes (approve, wrap)
+       ├─ @zama-fhe/sdk  ──────────────────── FHE encrypt / decrypt / unwrap / finalize via ViemSigner
+       │    └─ public Zama relayer  ───────── reached directly with the SDK's built-in endpoints
+       └─ config/customPairs.ts  ─────────── Extensibility point for non-registry pairs
 ```
 
 ## Known Async Behavior

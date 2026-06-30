@@ -110,13 +110,14 @@ describe("ERC7984WrapperABI", () => {
     expect((fn?.outputs?.[0] as { type: string })?.type).toBe("uint256")
   })
 
-  it("emits Wrap event with (address indexed to, uint256 roundedAmount, bytes32 encryptedWrappedAmount)", () => {
-    const ev = findEvent(ERC7984WrapperABI, "Wrap")
+  it("emits Wrapped event with (address indexed to, uint256 amountIn)", () => {
+    const ev = findEvent(ERC7984WrapperABI, "Wrapped")
     expect(ev).toBeDefined()
     const inputs = ev?.inputs as Array<{ name: string; type: string; indexed: boolean }>
     expect(inputs?.[0]?.name).toBe("to")
     expect(inputs?.[0]?.indexed).toBe(true)
-    expect(inputs?.[1]?.name).toBe("roundedAmount")
+    expect(inputs?.[1]?.name).toBe("amountIn")
+    expect(inputs?.[1]?.type).toBe("uint256")
     expect(inputs?.[1]?.indexed).toBe(false)
   })
 

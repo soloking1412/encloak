@@ -21,7 +21,7 @@ export function Header() {
   const chainId = useChainId()
   const { address } = useAccount()
   const { mine } = usePendingUnwraps(address, chainId)
-  const pendingCount = mine.filter((u) => u.status === "pending" || u.status === "ready").length
+  const pendingCount = mine.filter((u) => u.status !== "done").length
 
   const links = chainId === sepolia.id ? [...NAV, { href: "/faucet", label: "Faucet" }] : NAV
 

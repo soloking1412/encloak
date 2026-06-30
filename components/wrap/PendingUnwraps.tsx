@@ -1,31 +1,50 @@
 "use client"
 
+import { useState } from "react"
 import { useAccount, useChainId } from "wagmi"
-import { Clock } from "lucide-react"
+import { toast } from "sonner"
+import { Clock, ExternalLink } from "lucide-react"
 import { usePendingUnwraps } from "@/hooks/usePendingUnwraps"
+import { useUnwrap } from "@/hooks/useUnwrap"
 import { timeAgo, truncateAddress } from "@/lib/format"
+import { etherscanTx } from "@/lib/contracts/addresses"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { PendingUnwrap } from "@/types"
 
-interface Props {
-  onFinalize: (requestId: `0x${string}`, wrapperAddress: `0x${string}`) => void
-}
-
-const STATUS_CONFIG = {
-  pending: { label: "Awaiting decryption", class: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  ready: { label: "Ready to finalize", class: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  finalizing: { label: "Finalizing…", class: "bg-primary/10 text-primary border-primary/20" },
-  done: { label: "Done", class: "bg-muted text-muted-foreground border-border" },
-}
-
-export function PendingUnwraps({ onFinalize }: Props) {
+export function PendingUnwraps() {
   const { address } = useAccount()
   const chainId = useChainId()
-  const { mine, remove } = usePendingUnwraps(address, chainId)
+  const { mine, update, remove } = usePendingUnwraps(address, chainId)
+  const { finalize } = useUnwrap(null, "")
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   const active = mine.filter((u) => u.status !== "done")
   if (!active.length) return null
+
+  const handleFinalize = async (item: PendingUnwrap) => {
+    setBusyId(item.requestId)
+    update(item.requestId, { status: "finalizing" })
+    try {
+      const hash = await finalize(item.wrapperAddress, item.burnHandle, item.chainId)
+      update(item.requestId, { status: "done" })
+      toast.success(`Unwrapped ${item.wrapperSymbol}`, {
+        action: { label: "View tx", onClick: () => window.open(etherscanTx(item.chainId, hash), "_blank") },
+      })
+      setTimeout(() => remove(item.requestId), 1500)
+    } catch (e: unknown) {
+      update(item.requestId, { status: "pending" })
+      const msg = e instanceof Error ? e.message : ""
+      toast.error(
+        msg.includes("rejected")
+          ? "Transaction rejected"
+          : "Not ready yet — the relayer is still decrypting. Try again shortly."
+      )
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   return (
     <Card className="border-amber-500/20 bg-amber-500/5">
@@ -40,33 +59,41 @@ export function PendingUnwraps({ onFinalize }: Props) {
       </CardHeader>
       <CardContent className="space-y-2 pb-4">
         {active.map((u) => {
-          const cfg = STATUS_CONFIG[u.status] ?? STATUS_CONFIG.pending
+          const isBusy = busyId === u.requestId || u.status === "finalizing"
           return (
             <div
               key={u.requestId}
               className="flex items-center justify-between rounded-lg border border-border/60 bg-background/60 px-3 py-2.5 gap-3"
             >
               <div className="min-w-0 space-y-0.5">
-                <p className="font-mono text-xs text-muted-foreground truncate">
-                  {truncateAddress(u.requestId)}
+                <p className="text-sm font-medium flex items-center gap-1.5">
+                  {u.wrapperSymbol}
+                  <a
+                    href={etherscanTx(u.chainId, u.unwrapTxHash)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground/60 hover:text-muted-foreground"
+                    title="View unwrap request tx"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {truncateAddress(u.wrapperAddress)} · {timeAgo(u.timestamp)}
+                <p className="text-xs text-muted-foreground font-mono">
+                  {truncateAddress(u.requestId)} · {timeAgo(u.timestamp)}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${cfg.class}`}>
-                  {cfg.label}
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20">
+                  {u.status === "finalizing" ? "Finalizing…" : "Awaiting decryption"}
                 </span>
-                {u.status === "ready" && (
-                  <Button
-                    size="sm"
-                    className="h-6 text-xs px-2.5"
-                    onClick={() => onFinalize(u.requestId, u.wrapperAddress)}
-                  >
-                    Finalize
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  className="h-6 text-xs px-2.5"
+                  onClick={() => handleFinalize(u)}
+                  disabled={isBusy}
+                >
+                  {isBusy ? "…" : "Finalize"}
+                </Button>
                 <button
                   onClick={() => remove(u.requestId)}
                   className="text-muted-foreground/40 hover:text-muted-foreground text-xs transition-colors leading-none"
@@ -79,7 +106,8 @@ export function PendingUnwraps({ onFinalize }: Props) {
           )
         })}
         <p className="text-xs text-muted-foreground pt-1">
-          Finalization requires a relayer decryption round-trip — typically 5–30 min.
+          Finalization needs a relayer public-decryption round-trip. Click Finalize once it's
+          ready — if the relayer is still processing, retry in a moment.
         </p>
       </CardContent>
     </Card>

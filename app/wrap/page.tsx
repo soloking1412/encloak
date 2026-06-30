@@ -31,11 +31,7 @@ function WrapPageInner() {
         </p>
       </div>
 
-      <PendingUnwraps
-        onFinalize={(requestId, wrapperAddress) => {
-          console.log("Finalize:", requestId, wrapperAddress)
-        }}
-      />
+      <PendingUnwraps />
 
       <Tabs defaultValue="wrap">
         <TabsList className="w-full">

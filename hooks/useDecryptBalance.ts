@@ -1,43 +1,42 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useAccount, usePublicClient } from "wagmi"
-import { getZamaSDK } from "@/lib/sdk"
+import { useAccount, usePublicClient, useWalletClient } from "wagmi"
+import { getZamaSDK, decryptBalance } from "@/lib/sdk"
 
 export function useDecryptBalance() {
-  const { address, connector } = useAccount()
+  const { address } = useAccount()
   const publicClient = usePublicClient()
+  const { data: walletClient } = useWalletClient()
   const [balances, setBalances] = useState<Record<string, bigint>>({})
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const decrypt = useCallback(
     async (wrapperAddress: `0x${string}`, chainId: number) => {
-      if (!address || !publicClient) return
+      if (!address || !publicClient || !walletClient) return
 
       const key = wrapperAddress.toLowerCase()
       setLoading((p) => ({ ...p, [key]: true }))
       setErrors((p) => ({ ...p, [key]: "" }))
 
       try {
-        const walletClient = await connector?.getProvider?.()
-        if (!walletClient) throw new Error("Wallet client unavailable")
-
-        const sdk = await getZamaSDK(walletClient as never, publicClient as never, chainId)
-        const token = (sdk as { createToken: (a: string) => { balanceOf: () => Promise<bigint> } }).createToken(wrapperAddress)
-        const balance = await token.balanceOf()
+        const sdk = await getZamaSDK(walletClient, publicClient, chainId)
+        const balance = await decryptBalance(sdk, wrapperAddress)
         setBalances((p) => ({ ...p, [key]: balance }))
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Decryption failed"
         setErrors((p) => ({
           ...p,
-          [key]: msg.includes("User rejected") ? "Signature rejected" : "Decryption failed — not an ERC-7984 token or no balance",
+          [key]: msg.includes("User rejected") || msg.includes("rejected")
+            ? "Signature rejected"
+            : "Decryption failed — not an ERC-7984 token or no balance",
         }))
       } finally {
         setLoading((p) => ({ ...p, [key]: false }))
       }
     },
-    [address, publicClient, connector]
+    [address, publicClient, walletClient]
   )
 
   return { balances, loading, errors, decrypt }

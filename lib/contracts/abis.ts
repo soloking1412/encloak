@@ -96,8 +96,8 @@ export const ERC7984WrapperABI = [
     type: "function",
     stateMutability: "nonpayable",
     inputs: [
-      { name: "unwrapRequestId", type: "bytes32" },
-      { name: "unwrapAmountCleartext", type: "uint64" },
+      { name: "burntAmount", type: "bytes32" },
+      { name: "burntAmountCleartext", type: "uint64" },
       { name: "decryptionProof", type: "bytes" },
     ],
     outputs: [],
@@ -138,12 +138,11 @@ export const ERC7984WrapperABI = [
     outputs: [{ name: "", type: "string" }],
   },
   {
-    name: "Wrap",
+    name: "Wrapped",
     type: "event",
     inputs: [
       { name: "to", type: "address", indexed: true },
-      { name: "roundedAmount", type: "uint256", indexed: false },
-      { name: "encryptedWrappedAmount", type: "bytes32", indexed: false },
+      { name: "amountIn", type: "uint256", indexed: false },
     ],
   },
   {
