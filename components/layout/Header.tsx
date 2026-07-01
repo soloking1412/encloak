@@ -16,6 +16,7 @@ const NAV = [
   { href: "/decrypt", label: "Decrypt" },
   { href: "/add-pair", label: "Add Pair" },
   { href: "/activity", label: "Activity" },
+  { href: "/guide", label: "Guide" },
 ]
 
 export function Header() {

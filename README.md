@@ -25,6 +25,7 @@ Built for the [Zama Developer Program Bounty Season 3](https://www.zama.org/deve
 - **Activity** — a per-wallet, per-network log of your wraps, unwraps, finalizations, decryptions, faucet claims, and custom-pair additions, each with an Etherscan link.
 - **Faucet** (Sepolia only) — mint 1,000 of each cTokenMock directly to your wallet.
 - **Pending unwraps tracker** — nav badge + panel showing all in-flight unwrap requests across sessions, with a working on-chain Finalize button.
+- **In-app Guide** (`/guide`) — explains confidential ERC-7984 tokens, wrapping, EIP-712 decryption, the two-step async unwrap, and custom pairs, with an FAQ.
 
 ## How the Registry is Sourced
 
