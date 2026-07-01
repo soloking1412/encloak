@@ -17,7 +17,7 @@ function WrapPageInner() {
   const { pairs, isLoading } = useRegistryPairs()
 
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="space-y-8 max-w-2xl animate-in fade-in slide-in-from-bottom-1 duration-500">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
@@ -46,7 +46,7 @@ function WrapPageInner() {
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-10 rounded-lg bg-muted/40 animate-pulse" />
+                <div key={i} className="skeleton h-10 rounded-lg" />
               ))}
             </div>
           ) : (
@@ -58,7 +58,7 @@ function WrapPageInner() {
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-10 rounded-lg bg-muted/40 animate-pulse" />
+                <div key={i} className="skeleton h-10 rounded-lg" />
               ))}
             </div>
           ) : (
@@ -72,7 +72,7 @@ function WrapPageInner() {
 
 export default function WrapPage() {
   return (
-    <Suspense fallback={<div className="h-96 animate-pulse rounded-xl bg-muted/40" />}>
+    <Suspense fallback={<div className="skeleton h-96 rounded-xl" />}>
       <WrapPageInner />
     </Suspense>
   )

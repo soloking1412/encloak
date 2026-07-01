@@ -47,23 +47,24 @@ export function PendingUnwraps() {
   }
 
   return (
-    <Card className="border-amber-500/20 bg-amber-500/5">
+    <Card className="border-amber-500/20 bg-amber-500/5 animate-in fade-in slide-in-from-top-1 duration-400">
       <CardHeader className="pb-3 pt-4">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Clock className="h-4 w-4 text-amber-400" />
           Pending Unwraps
-          <Badge variant="destructive" className="text-[10px] h-4 px-1.5">
+          <Badge variant="destructive" className="text-[10px] h-4 px-1.5 animate-in zoom-in-50 duration-300">
             {active.length}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 pb-4">
-        {active.map((u) => {
+        {active.map((u, i) => {
           const isBusy = busyId === u.requestId || u.status === "finalizing"
           return (
             <div
               key={u.requestId}
-              className="flex items-center justify-between rounded-lg border border-border/60 bg-background/60 px-3 py-2.5 gap-3"
+              className="flex items-center justify-between rounded-lg border border-border/60 bg-background/60 px-3 py-2.5 gap-3 animate-in fade-in slide-in-from-left-1 fill-mode-both duration-400"
+              style={{ animationDelay: `${Math.min(i, 10) * 50}ms` }}
             >
               <div className="min-w-0 space-y-0.5">
                 <p className="text-sm font-medium flex items-center gap-1.5">
@@ -83,7 +84,10 @@ export function PendingUnwraps() {
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20">
+                <span className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20">
+                  {u.status !== "finalizing" && (
+                    <span className="pulse-ring h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  )}
                   {u.status === "finalizing" ? "Finalizing…" : "Awaiting decryption"}
                 </span>
                 <Button

@@ -12,7 +12,7 @@ export default function RegistryPage() {
   const { pairs, isLoading, error, isSupported } = useRegistryPairs()
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-1 duration-500">
       <div className="space-y-3">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/8 px-3 py-1 text-xs font-medium text-primary">
           <Shield className="h-3 w-3" />

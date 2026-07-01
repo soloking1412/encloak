@@ -32,7 +32,9 @@ function symbolColor(symbol: string) {
 function TokenAvatar({ symbol }: { symbol: string }) {
   const initials = symbol.replace(/^c/, "").slice(0, 3).toUpperCase()
   return (
-    <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${symbolColor(symbol)}`}>
+    <div
+      className={`h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-transform duration-200 group-hover:scale-110 ${symbolColor(symbol)}`}
+    >
       {initials}
     </div>
   )
@@ -68,7 +70,15 @@ function AddrLink({ address, chainId }: { address: string; chainId: number }) {
   )
 }
 
-export function PairRow({ pair, chainId }: { pair: WrapperPair; chainId: number }) {
+export function PairRow({
+  pair,
+  chainId,
+  index = 0,
+}: {
+  pair: WrapperPair
+  chainId: number
+  index?: number
+}) {
   const router = useRouter()
   const { balances, loading, errors, decrypt } = useDecryptBalance()
   const [rateOpen, setRateOpen] = useState(false)
@@ -77,7 +87,10 @@ export function PairRow({ pair, chainId }: { pair: WrapperPair; chainId: number 
 
   return (
     <>
-      <TableRow className="group hover:bg-muted/30 transition-colors">
+      <TableRow
+        className="group hover:bg-muted/30 transition-colors animate-in fade-in slide-in-from-left-2 fill-mode-both duration-400"
+        style={{ animationDelay: `${Math.min(index, 10) * 40}ms` }}
+      >
         <TableCell>
           <div className="flex items-center gap-2.5">
             <TokenAvatar symbol={pair.wrapper.symbol} />
@@ -122,7 +135,7 @@ export function PairRow({ pair, chainId }: { pair: WrapperPair; chainId: number 
 
         <TableCell>
           {balances[key] !== undefined ? (
-            <span className="font-mono text-sm text-emerald-400">
+            <span className="font-mono text-sm text-emerald-400 inline-block animate-in fade-in blur-in zoom-in-95 duration-500">
               {formatTokenAmount(balances[key], pair.wrapper.decimals)}{" "}
               <span className="text-xs text-muted-foreground">{pair.wrapper.symbol}</span>
             </span>

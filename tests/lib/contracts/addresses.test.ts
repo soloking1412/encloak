@@ -67,8 +67,8 @@ describe("SEPOLIA_PAIRS", () => {
 })
 
 describe("MAINNET_PAIRS", () => {
-  it("contains exactly 7 entries", () => {
-    expect(MAINNET_PAIRS).toHaveLength(7)
+  it("contains exactly 9 entries", () => {
+    expect(MAINNET_PAIRS).toHaveLength(9)
   })
 
   it("has valid wrapper and erc20 addresses for every entry", () => {
@@ -85,7 +85,7 @@ describe("MAINNET_PAIRS", () => {
 
   it("includes expected mainnet symbols", () => {
     const symbols = MAINNET_PAIRS.map((p) => p.symbol)
-    for (const sym of ["cUSDC", "cUSDT", "cWETH", "cBRON", "cZAMA", "ctGBP", "cXAUt"]) {
+    for (const sym of ["cUSDC", "cUSDT", "cWETH", "cBRON", "cZAMA", "ctGBP", "cXAUt", "cbbqTGBP", "csteakcUSDC"]) {
       expect(symbols).toContain(sym)
     }
   })

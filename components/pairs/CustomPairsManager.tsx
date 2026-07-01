@@ -62,10 +62,11 @@ ${stored
         </Button>
       </CardHeader>
       <CardContent className="space-y-2">
-        {stored.map((p) => (
+        {stored.map((p, i) => (
           <div
             key={p.wrapper.address}
-            className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 gap-3"
+            className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 gap-3 animate-in fade-in slide-in-from-left-1 fill-mode-both duration-400"
+            style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
           >
             <div className="min-w-0">
               <p className="text-sm font-medium">

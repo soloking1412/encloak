@@ -63,11 +63,15 @@ export function ActivityFeed() {
         </Button>
       </div>
       <div className="rounded-xl border border-border/60 divide-y divide-border/60">
-        {mine.map((a) => {
+        {mine.map((a, i) => {
           const Icon = ICONS[a.type]
           return (
-            <div key={a.id} className="flex items-center gap-3 px-4 py-3">
-              <div className={`rounded-lg p-2 shrink-0 ${TINT[a.type]}`}>
+            <div
+              key={a.id}
+              className="flex items-center gap-3 px-4 py-3 animate-in fade-in slide-in-from-left-1 fill-mode-both duration-400"
+              style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+            >
+              <div className={`rounded-lg p-2 shrink-0 transition-transform duration-200 hover:scale-110 ${TINT[a.type]}`}>
                 <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">

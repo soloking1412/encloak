@@ -32,7 +32,7 @@ export function RegistryTable({ pairs, chainId, isLoading }: Props) {
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-14 rounded-lg bg-muted/40 animate-pulse" style={{ opacity: 1 - i * 0.15 }} />
+          <div key={i} className="skeleton h-14 rounded-lg" style={{ opacity: 1 - i * 0.15 }} />
         ))}
       </div>
     )
@@ -72,8 +72,8 @@ export function RegistryTable({ pairs, chainId, isLoading }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((pair) => (
-              <PairRow key={pair.wrapper.address} pair={pair} chainId={chainId} />
+            {filtered.map((pair, i) => (
+              <PairRow key={pair.wrapper.address} pair={pair} chainId={chainId} index={i} />
             ))}
           </TableBody>
         </Table>

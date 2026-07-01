@@ -163,7 +163,7 @@ export function AddPairForm({ chainId }: Props) {
         </Button>
 
         {ready && (
-          <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-4">
+          <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-4 animate-in fade-in slide-in-from-top-1 duration-400">
             <div className="flex items-center gap-2 text-sm">
               {isRegistered
                 ? <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />

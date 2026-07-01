@@ -133,7 +133,7 @@ export function FaucetCard({ symbol, name, erc20Address, wrapperAddress, decimal
   const initials = symbol.replace(/Mock$/, "").replace(/^c/, "").slice(0, 3).toUpperCase()
 
   return (
-    <Card className="border-border/60 hover:border-border transition-colors">
+    <Card className="border-border/60 hover:border-border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <CardHeader className="pb-3 pt-4 px-4">
         <div className="flex items-center gap-3">
           <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${symbolColor(symbol)}`}>
@@ -190,7 +190,7 @@ export function FaucetCard({ symbol, name, erc20Address, wrapperAddress, decimal
             <Button
               variant="outline"
               size="sm"
-              className="h-8 text-xs gap-1"
+              className="h-8 text-xs gap-1 animate-in fade-in zoom-in-95 slide-in-from-left-1 duration-300"
               onClick={() => router.push(`/wrap?token=${erc20Address}`)}
             >
               Wrap

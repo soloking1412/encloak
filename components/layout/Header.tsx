@@ -57,7 +57,10 @@ export function Header() {
                 >
                   {link.label}
                   {link.label === "Wrap" && pendingCount > 0 && (
-                    <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] leading-none">
+                    <Badge
+                      variant="destructive"
+                      className="h-4 min-w-4 px-1 text-[9px] leading-none animate-in zoom-in-50 duration-300"
+                    >
                       {pendingCount}
                     </Badge>
                   )}

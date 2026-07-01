@@ -127,11 +127,12 @@ export function UnwrapForm({ pairs, chainId }: Props) {
       )}
 
       {state !== "idle" && state !== "error" && (
-        <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
+        <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3 animate-in fade-in slide-in-from-top-1 duration-300">
           {steps.map((s, i) => (
             <div key={s.label} className="flex items-center gap-3">
               <span
-                className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                key={`${s.label}-${s.done}-${s.active}`}
+                className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 animate-in zoom-in-50 duration-300 ${
                   s.done
                     ? "bg-emerald-500/20 text-emerald-400"
                     : s.active
@@ -142,7 +143,7 @@ export function UnwrapForm({ pairs, chainId }: Props) {
                 {s.done ? "✓" : s.active ? "•" : i + 1}
               </span>
               <span
-                className={`text-sm ${
+                className={`text-sm transition-colors duration-300 ${
                   s.done
                     ? "text-emerald-400"
                     : s.active

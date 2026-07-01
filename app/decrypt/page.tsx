@@ -10,7 +10,7 @@ export default function DecryptPage() {
   const { pairs, isLoading } = useRegistryPairs()
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-1 duration-500">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
@@ -26,7 +26,7 @@ export default function DecryptPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-14 rounded-lg bg-muted/40 animate-pulse" style={{ opacity: 1 - i * 0.18 }} />
+            <div key={i} className="skeleton h-14 rounded-lg" style={{ opacity: 1 - i * 0.18 }} />
           ))}
         </div>
       ) : (

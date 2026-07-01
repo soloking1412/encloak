@@ -34,7 +34,7 @@ export default function FaucetPage() {
 
   if (chainId !== sepolia.id) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-1 duration-500">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
@@ -57,7 +57,7 @@ export default function FaucetPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-1 duration-500">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
@@ -75,14 +75,19 @@ export default function FaucetPage() {
           const nameResult = metadata?.[i * 2]?.result
           const decimalsResult = metadata?.[i * 2 + 1]?.result
           return (
-            <FaucetCard
+            <div
               key={pair.erc20}
-              symbol={pair.symbol}
-              name={(nameResult as string) ?? pair.symbol}
-              erc20Address={pair.erc20}
-              wrapperAddress={pair.wrapper}
-              decimals={(decimalsResult as number) ?? 18}
-            />
+              className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <FaucetCard
+                symbol={pair.symbol}
+                name={(nameResult as string) ?? pair.symbol}
+                erc20Address={pair.erc20}
+                wrapperAddress={pair.wrapper}
+                decimals={(decimalsResult as number) ?? 18}
+              />
+            </div>
           )
         })}
       </div>

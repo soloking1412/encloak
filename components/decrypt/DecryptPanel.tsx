@@ -72,7 +72,7 @@ export function DecryptPanel({ pairs, chainId }: Props) {
 
         {pairs.length > 0 ? (
           <div className="rounded-xl border border-border/60 divide-y divide-border/60">
-            {pairs.map((pair) => {
+            {pairs.map((pair, i) => {
               const key = pair.wrapper.address.toLowerCase()
               const balance = balances[key]
               const isLoading = loading[key]
@@ -82,7 +82,8 @@ export function DecryptPanel({ pairs, chainId }: Props) {
               return (
                 <div
                   key={pair.wrapper.address}
-                  className="flex items-center justify-between px-4 py-3 gap-4"
+                  className="flex items-center justify-between px-4 py-3 gap-4 animate-in fade-in slide-in-from-left-1 fill-mode-both duration-400"
+                  style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${symbolColor(pair.wrapper.symbol)}`}>
@@ -103,7 +104,7 @@ export function DecryptPanel({ pairs, chainId }: Props) {
 
                   <div className="flex items-center gap-3 shrink-0">
                     {balance !== undefined ? (
-                      <span className="font-mono text-sm text-emerald-400 flex items-center gap-1.5">
+                      <span className="font-mono text-sm text-emerald-400 flex items-center gap-1.5 animate-in fade-in blur-in zoom-in-95 duration-500">
                         <LockOpen className="h-3.5 w-3.5" />
                         {formatTokenAmount(balance, pair.wrapper.decimals)}{" "}
                         <span className="text-xs text-muted-foreground">{pair.wrapper.symbol}</span>
@@ -180,7 +181,7 @@ export function DecryptPanel({ pairs, chainId }: Props) {
         )}
 
         {balances[customKey] !== undefined && (
-          <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 animate-in fade-in slide-in-from-bottom-1 zoom-in-95 duration-500">
             <LockOpen className="h-4 w-4 text-emerald-400 shrink-0" />
             <span className="text-sm">
               Balance:{" "}

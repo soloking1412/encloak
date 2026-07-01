@@ -105,7 +105,10 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
       </div>
 
       {selectedPair && (
-        <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+        <div
+          key={selectedPair.wrapper.address}
+          className="rounded-lg border border-border/60 bg-muted/20 p-4 animate-in fade-in slide-in-from-bottom-1 duration-300"
+        >
           <div className="flex items-center gap-3 text-sm">
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">You send</p>
@@ -170,13 +173,14 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
       )}
 
       {(state === "approving" || state === "approved" || state === "wrapping" || state === "success") && (
-        <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+        <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 animate-in fade-in slide-in-from-top-1 duration-300">
           {steps.map((s, i) => (
             <div key={s.label} className="flex items-center gap-2">
               {i > 0 && <div className="h-px w-6 bg-border flex-shrink-0" />}
               <div className="flex items-center gap-1.5">
                 <span
-                  className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                  key={`${s.label}-${s.done}`}
+                  className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 animate-in zoom-in-50 duration-300 ${
                     s.done
                       ? "bg-emerald-500/20 text-emerald-400"
                       : "border border-border bg-muted text-muted-foreground"
@@ -184,7 +188,7 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
                 >
                   {s.done ? "✓" : i + 1}
                 </span>
-                <span className={`text-sm ${s.done ? "text-emerald-400" : "text-muted-foreground"}`}>
+                <span className={`text-sm transition-colors duration-300 ${s.done ? "text-emerald-400" : "text-muted-foreground"}`}>
                   {s.label}
                 </span>
               </div>

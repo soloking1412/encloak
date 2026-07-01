@@ -66,7 +66,7 @@ export const MAINNET_PAIRS: Array<{
 }> = [
   {
     wrapper: "0xe978F22157048E5DB8E5d07971376e86671672B2",
-    erc20: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    erc20: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     symbol: "cUSDC",
   },
   {
@@ -76,7 +76,7 @@ export const MAINNET_PAIRS: Array<{
   },
   {
     wrapper: "0xda9396b82634Ea99243cE51258B6A5Ae512D4893",
-    erc20: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    erc20: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     symbol: "cWETH",
   },
   {
@@ -91,13 +91,23 @@ export const MAINNET_PAIRS: Array<{
   },
   {
     wrapper: "0xa873750ccBafD5ec7Dd13bfD5237d7129832eDD9",
-    erc20: "0x27f6c8289550fce67f6b50bed1f519966afe5287",
+    erc20: "0x27f6c8289550fCE67f6B50BeD1F519966aFE5287",
     symbol: "ctGBP",
   },
   {
     wrapper: "0x73cc9aF9d6BEFdb3c3fAf8a5E8c05Cb95FdaEEf1",
     erc20: "0x68749665FF8D2d112Fa859AA293F07A622782F38",
     symbol: "cXAUt",
+  },
+  {
+    wrapper: "0xBA4cFF6ED6F7Cb2A58776dECa4E984b498446762",
+    erc20: "0xbeeffABcd0dB09589Dd21854aa760C52aB4bf04F",
+    symbol: "cbbqTGBP",
+  },
+  {
+    wrapper: "0x66Bf74E96900D1a19c7070D939D124f2F565C458",
+    erc20: "0xbEEF00A59B577423653A1526c7009bdE103F542B",
+    symbol: "csteakcUSDC",
   },
 ]
 

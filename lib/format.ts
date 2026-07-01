@@ -16,12 +16,16 @@ export function formatRate(rate: bigint): string {
   return `1:${rate.toString()}`
 }
 
-export function formatTVS(amount: bigint, decimals: number): string {
-  if (amount === 0n) return "0"
-  const n = parseFloat(formatUnits(amount, decimals))
+export function formatCompactNumber(n: number): string {
+  if (n === 0) return "0"
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`
   if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`
   return n.toFixed(4)
+}
+
+export function formatTVS(amount: bigint, decimals: number): string {
+  if (amount === 0n) return "0"
+  return formatCompactNumber(parseFloat(formatUnits(amount, decimals)))
 }
 
 export function timeAgo(ts: number): string {
