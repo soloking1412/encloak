@@ -92,7 +92,12 @@ export function WrapForm({ pairs, chainId, defaultToken }: Props) {
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select a token" />
+            <SelectValue placeholder="Select a token">
+              {(value) => {
+                const p = pairs.find((x) => x.erc20.address === value)
+                return p ? `${p.erc20.symbol} → ${p.wrapper.symbol}` : "Select a token"
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {pairs.map((p) => (

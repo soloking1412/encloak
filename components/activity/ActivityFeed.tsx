@@ -1,7 +1,7 @@
 "use client"
 
 import { useAccount, useChainId } from "wagmi"
-import { ArrowDownUp, LockOpen, Droplets, Plus, CheckCircle2, ArrowUpRight, Trash2 } from "lucide-react"
+import { ArrowDownUp, LockOpen, Droplets, Plus, CheckCircle2, ArrowUpRight, Trash2, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useActivity } from "@/hooks/useActivity"
@@ -16,6 +16,7 @@ const ICONS: Record<ActivityType, typeof ArrowDownUp> = {
   faucet: Droplets,
   decrypt: LockOpen,
   "add-pair": Plus,
+  transfer: Send,
 }
 
 const TINT: Record<ActivityType, string> = {
@@ -25,6 +26,7 @@ const TINT: Record<ActivityType, string> = {
   faucet: "bg-cyan-500/10 text-cyan-400",
   decrypt: "bg-violet-500/10 text-violet-400",
   "add-pair": "bg-amber-500/10 text-amber-400",
+  transfer: "bg-fuchsia-500/10 text-fuchsia-400",
 }
 
 export function ActivityFeed() {

@@ -22,7 +22,7 @@ export default function RegistryPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Wrapper Registry</h1>
           <p className="text-muted-foreground mt-1.5 max-w-xl">
             Every official ERC-20 ↔ ERC-7984 confidential token pair from the onchain registry.
-            Wrap tokens into their encrypted equivalents, decrypt balances on-demand, or claim test tokens from the faucet.
+            Wrap tokens into their encrypted equivalents, send them privately, decrypt balances on-demand, or claim test tokens from the faucet.
           </p>
         </div>
       </div>

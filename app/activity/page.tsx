@@ -14,7 +14,7 @@ export default function ActivityPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
         </div>
         <p className="text-muted-foreground text-sm">
-          Your wraps, unwraps, finalizations, decryptions, and faucet claims on this network.
+          Your wraps, unwraps, confidential sends, finalizations, decryptions, and faucet claims on this network.
         </p>
       </div>
 

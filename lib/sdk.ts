@@ -73,6 +73,27 @@ export async function decryptBalance(
   return sdk.createReadonlyToken(wrapperAddress).balanceOf()
 }
 
+/** Confidentially transfer an encrypted amount to another address. The SDK
+ * encrypts the amount via FHE and validates the sender's balance first. */
+export async function confidentialTransfer(
+  sdk: ZamaSDK,
+  tokenAddress: `0x${string}`,
+  to: `0x${string}`,
+  amount: bigint
+): Promise<`0x${string}`> {
+  const { txHash } = await sdk.createToken(tokenAddress).confidentialTransfer(to, amount)
+  return txHash
+}
+
+/** ERC-165 check that an address implements the ERC-7984 confidential token
+ * interface — used to reject non-confidential tokens before a decrypt. */
+export async function isConfidentialToken(
+  sdk: ZamaSDK,
+  address: `0x${string}`
+): Promise<boolean> {
+  return sdk.createReadonlyToken(address).isConfidential()
+}
+
 /** Decrypt many balances with a single wallet signature: pre-authorize all
  * addresses once, then read each (credentials are cached after the first). */
 export async function decryptAllBalances(

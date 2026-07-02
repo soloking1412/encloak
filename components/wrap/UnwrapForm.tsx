@@ -82,7 +82,12 @@ export function UnwrapForm({ pairs, chainId }: Props) {
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select a token" />
+            <SelectValue placeholder="Select a token">
+              {(value) => {
+                const p = pairs.find((x) => x.wrapper.address === value)
+                return p ? `${p.wrapper.symbol} → ${p.erc20.symbol}` : "Select a token"
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {pairs.map((p) => (

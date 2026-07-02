@@ -193,7 +193,7 @@ export function DecryptPanel({ pairs, chainId }: Props) {
         )}
 
         <Button
-          onClick={() => customAddress && decrypt(customAddress, chainId)}
+          onClick={() => customAddress && decrypt(customAddress, chainId, undefined, { validateFirst: true })}
           disabled={!customAddress || loading[customKey] || !address}
           variant="outline"
           className="flex items-center gap-2"

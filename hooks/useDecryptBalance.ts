@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { useAccount, usePublicClient, useWalletClient } from "wagmi"
-import { getZamaSDK, decryptBalance, decryptAllBalances } from "@/lib/sdk"
+import { getZamaSDK, decryptBalance, decryptAllBalances, isConfidentialToken } from "@/lib/sdk"
 import { useActivity } from "@/hooks/useActivity"
 
 export function useDecryptBalance() {
@@ -16,7 +16,12 @@ export function useDecryptBalance() {
   const [batchLoading, setBatchLoading] = useState(false)
 
   const decrypt = useCallback(
-    async (wrapperAddress: `0x${string}`, chainId: number, symbol?: string) => {
+    async (
+      wrapperAddress: `0x${string}`,
+      chainId: number,
+      symbol?: string,
+      opts?: { validateFirst?: boolean }
+    ) => {
       if (!address || !publicClient || !walletClient) return
 
       const key = wrapperAddress.toLowerCase()
@@ -25,6 +30,18 @@ export function useDecryptBalance() {
 
       try {
         const sdk = await getZamaSDK(walletClient, publicClient, chainId)
+
+        if (opts?.validateFirst) {
+          const ok = await isConfidentialToken(sdk, wrapperAddress).catch(() => false)
+          if (!ok) {
+            setErrors((p) => ({
+              ...p,
+              [key]: "This address is not an ERC-7984 confidential token.",
+            }))
+            return
+          }
+        }
+
         const balance = await decryptBalance(sdk, wrapperAddress)
         setBalances((p) => ({ ...p, [key]: balance }))
         logActivity({

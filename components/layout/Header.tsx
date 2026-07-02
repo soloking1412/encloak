@@ -7,12 +7,14 @@ import { useChainId, useAccount } from "wagmi"
 import { sepolia } from "wagmi/chains"
 import { Shield } from "lucide-react"
 import { NetworkSwitcher } from "./NetworkSwitcher"
+import { ThemeToggle } from "./ThemeToggle"
 import { usePendingUnwraps } from "@/hooks/usePendingUnwraps"
 import { Badge } from "@/components/ui/badge"
 
 const NAV = [
   { href: "/", label: "Registry" },
   { href: "/wrap", label: "Wrap" },
+  { href: "/send", label: "Send" },
   { href: "/decrypt", label: "Decrypt" },
   { href: "/add-pair", label: "Add Pair" },
   { href: "/activity", label: "Activity" },
@@ -70,7 +72,8 @@ export function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
           <NetworkSwitcher />
           <ConnectButton accountStatus="avatar" chainStatus="none" showBalance={false} />
         </div>

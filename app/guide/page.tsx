@@ -12,6 +12,7 @@ import {
   KeyRound,
   Wallet,
   CircleHelp,
+  Send,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -60,6 +61,7 @@ const TOC = [
   { href: "#what", label: "What is a confidential token" },
   { href: "#wrap", label: "Wrapping" },
   { href: "#decrypt", label: "Decrypting balances" },
+  { href: "#send", label: "Sending privately" },
   { href: "#unwrap", label: "Unwrapping (async)" },
   { href: "#custom", label: "Adding a pair" },
   { href: "#faq", label: "FAQ" },
@@ -196,6 +198,38 @@ export default function GuidePage() {
           className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
         >
           Go to My Balances <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </section>
+
+      <Separator />
+
+      {/* Sending */}
+      <section className="space-y-4">
+        <SectionHeading icon={Send} title="Sending privately" id="send" />
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          This is where confidential tokens shine. A normal ERC-20 transfer broadcasts the amount to
+          the world; a confidential transfer encrypts it. You can pay, tip, or move value between
+          wallets and <strong className="text-foreground">nobody can see how much</strong> — only you
+          and the recipient can decrypt the balances.
+        </p>
+        <div className="rounded-lg border border-border/60 bg-muted/10 p-4 space-y-3">
+          <Step n={1} title="Pick a token and recipient">
+            Choose any confidential token you hold and paste the recipient&apos;s address.
+          </Step>
+          <Step n={2} title="Enter an amount">
+            The SDK encrypts it with FHE and checks your balance before submitting. The amount never
+            appears on-chain in the clear.
+          </Step>
+          <Step n={3} title="Send">
+            The recipient instantly holds the encrypted tokens — they can decrypt, hold, unwrap, or
+            forward them, all confidentially.
+          </Step>
+        </div>
+        <Link
+          href="/send"
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+        >
+          Go to Send <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </section>
 

@@ -53,7 +53,14 @@ export interface StoredCustomPair {
   addedAt: number
 }
 
-export type ActivityType = "wrap" | "unwrap" | "finalize" | "faucet" | "decrypt" | "add-pair"
+export type ActivityType =
+  | "wrap"
+  | "unwrap"
+  | "finalize"
+  | "faucet"
+  | "decrypt"
+  | "add-pair"
+  | "transfer"
 
 export interface ActivityItem {
   id: string

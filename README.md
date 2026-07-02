@@ -20,12 +20,14 @@ Built for the [Zama Developer Program Bounty Season 3](https://www.zama.org/deve
 - **Registry browser** — reads `getTokenConfidentialTokenPairs()` from the onchain Wrappers Registry. Shows all valid pairs with token metadata, conversion rate, aggregate TVS (inferred total supply), and a rate/decimals explainer.
 - **Wrap** — ERC-20 `approve` → wrapper `wrap` with live rate preview and approval step tracking.
 - **Unwrap** — two-step async flow. Step 1 calls the Zama SDK `Token.unwrap()` and captures the `UnwrapRequested` event's encrypted-amount handle, persisting it to localStorage. Step 2 calls `Token.finalizeUnwrap(handle)` once the relayer has run the public decryption — survives page reloads.
-- **My Balances / Decrypt** — EIP-712 user decryption via the Zama SDK. Reveal balances one at a time, **or decrypt every balance with a single signature** (`sdk.allow([...])` pre-authorization). Also decrypts any arbitrary ERC-7984 address.
+- **Send (confidential transfer)** — transfer any confidential token to another address with the amount **encrypted end-to-end** via FHE (`Token.confidentialTransfer(to, amount)`). Observers see that a transfer happened, not how much. This is what makes registry wrappers actually *useful* — private payments, not just wrap/unwrap.
+- **My Balances / Decrypt** — EIP-712 user decryption via the Zama SDK. Reveal balances one at a time, **or decrypt every balance with a single signature** (`sdk.allow([...])` pre-authorization). Also decrypts any arbitrary ERC-7984 address, with an ERC-165 pre-check that rejects non-confidential tokens with a clear message.
 - **Add a Pair (UI)** — paste an ERC-20 + ERC-7984 wrapper; the app validates them on-chain, **auto-fetches token metadata**, and adds the pair to your registry in one click. It appears instantly across Registry, Wrap, and Decrypt — no redeploy, no config edit. Stored in your browser; export a `config/customPairs.ts` snippet to make it permanent for everyone.
 - **Activity** — a per-wallet, per-network log of your wraps, unwraps, finalizations, decryptions, faucet claims, and custom-pair additions, each with an Etherscan link.
 - **Faucet** (Sepolia only) — mint 1,000 of each cTokenMock directly to your wallet.
 - **Pending unwraps tracker** — nav badge + panel showing all in-flight unwrap requests across sessions, with a working on-chain Finalize button.
 - **In-app Guide** (`/guide`) — explains confidential ERC-7984 tokens, wrapping, EIP-712 decryption, the two-step async unwrap, and custom pairs, with an FAQ.
+- **Light / dark theme** — dark by default, with a one-click toggle in the header (RainbowKit and toasts follow the theme).
 
 ## How the Registry is Sourced
 
