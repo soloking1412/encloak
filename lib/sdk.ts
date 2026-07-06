@@ -66,6 +66,24 @@ export async function finalizeUnwrap(
   return txHash
 }
 
+/** Check whether the relayer has finished the public decryption for an unwrap
+ * (i.e. the burnt amount can be decrypted → finalize will succeed). No wallet
+ * signature; time-boxed so a slow relayer never hangs the poll. */
+export async function isUnwrapReady(
+  sdk: ZamaSDK,
+  burnHandle: `0x${string}`
+): Promise<boolean> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("timeout")), 15_000)
+  )
+  try {
+    await Promise.race([sdk.publicDecrypt([burnHandle]), timeout])
+    return true
+  } catch {
+    return false
+  }
+}
+
 export async function decryptBalance(
   sdk: ZamaSDK,
   wrapperAddress: `0x${string}`

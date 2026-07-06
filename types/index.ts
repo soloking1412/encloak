@@ -24,7 +24,7 @@ export interface PendingUnwrap {
   chainId: number
   walletAddress: `0x${string}`
   timestamp: number
-  status: "pending" | "finalizing" | "done"
+  status: "pending" | "ready" | "finalizing" | "done"
 }
 
 export interface CustomPair {
