@@ -124,6 +124,13 @@ export const ERC7984WrapperABI = [
     outputs: [{ name: "", type: "uint256" }],
   },
   {
+    name: "unwrapRequester",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "unwrapRequestId", type: "bytes32" }],
+    outputs: [{ name: "", type: "address" }],
+  },
+  {
     name: "name",
     type: "function",
     stateMutability: "view",

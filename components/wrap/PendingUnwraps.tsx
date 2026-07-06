@@ -7,6 +7,7 @@ import { Clock, ExternalLink, CheckCircle2 } from "lucide-react"
 import { usePendingUnwraps } from "@/hooks/usePendingUnwraps"
 import { useUnwrap } from "@/hooks/useUnwrap"
 import { getZamaSDK, isUnwrapReady } from "@/lib/sdk"
+import { ERC7984WrapperABI } from "@/lib/contracts/abis"
 import { timeAgo, truncateAddress } from "@/lib/format"
 import { etherscanTx } from "@/lib/contracts/addresses"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +17,10 @@ import type { PendingUnwrap } from "@/types"
 
 const FINALIZE_TIMEOUT_MS = 180_000
 const POLL_INTERVAL_MS = 30_000
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+// Custom error selector for InvalidUnwrapRequest(bytes32) — thrown when the
+// request is no longer pending (i.e. it was already finalized).
+const ALREADY_FINALIZED = "0xd1630f8e"
 
 export function PendingUnwraps() {
   const { address } = useAccount()
@@ -40,24 +45,44 @@ export function PendingUnwraps() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusKey, busyId])
 
-  // Poll the relayer so the item flips to "ready" the moment finalize will
-  // succeed — the user no longer has to guess or retry into a hang.
+  // Background poll: (1) auto-clear any request already finalized on-chain, and
+  // (2) flip still-pending rows to "ready" the moment finalize will succeed —
+  // so the user never sits on a stuck row or retries into a doomed finalize.
   const activeRef = useRef(active)
   activeRef.current = active
-  const pollKey = active
-    .filter((u) => u.status === "pending")
-    .map((u) => u.requestId)
-    .join(",")
+  const activeKey = active.map((u) => u.requestId).join(",")
 
   useEffect(() => {
-    if (!walletClient || !publicClient || !pollKey) return
+    if (!publicClient || !activeKey) return
     let cancelled = false
 
     const check = async () => {
+      // (1) Completion check — a cleared requester means it was finalized.
+      for (const item of activeRef.current) {
+        if (cancelled || item.status === "finalizing" || item.status === "done") continue
+        try {
+          const requester = await publicClient.readContract({
+            address: item.wrapperAddress,
+            abi: ERC7984WrapperABI,
+            functionName: "unwrapRequester",
+            args: [item.burnHandle],
+          })
+          if (!cancelled && (requester as string).toLowerCase() === ZERO_ADDRESS) {
+            update(item.requestId, { status: "done" })
+            toast.success(`${item.wrapperSymbol} unwrapped — tokens are back in your wallet`)
+            setTimeout(() => remove(item.requestId), 1500)
+          }
+        } catch {
+          // ignore transient read failures; retried next tick
+        }
+      }
+
+      // (2) Readiness check (needs the SDK / a connected wallet).
+      if (cancelled || !walletClient) return
       const sdk = await getZamaSDK(walletClient, publicClient, chainId).catch(() => null)
       if (!sdk || cancelled) return
       for (const item of activeRef.current) {
-        if (item.status !== "pending" || cancelled) continue
+        if (cancelled || item.status !== "pending") continue
         const ready = await isUnwrapReady(sdk, item.burnHandle)
         if (ready && !cancelled) update(item.requestId, { status: "ready" })
       }
@@ -69,7 +94,7 @@ export function PendingUnwraps() {
       cancelled = true
       clearInterval(id)
     }
-  }, [pollKey, walletClient, publicClient, chainId, update])
+  }, [activeKey, walletClient, publicClient, chainId, update, remove])
 
   if (!active.length) return null
 
@@ -93,13 +118,20 @@ export function PendingUnwraps() {
       })
       setTimeout(() => remove(item.requestId), 1500)
     } catch (e: unknown) {
-      update(item.requestId, { status: "pending" })
       const msg = e instanceof Error ? e.message : ""
-      toast.error(
-        msg.includes("rejected")
-          ? "Transaction rejected"
-          : "Not ready yet — the relayer is still decrypting. It'll flip to Ready automatically."
-      )
+      if (msg.includes(ALREADY_FINALIZED) || msg.toLowerCase().includes("invalidunwraprequest")) {
+        // The request was already finalized — the tokens are already back.
+        update(item.requestId, { status: "done" })
+        toast.success(`${item.wrapperSymbol} was already unwrapped — tokens are in your wallet`)
+        setTimeout(() => remove(item.requestId), 1500)
+      } else {
+        update(item.requestId, { status: "pending" })
+        toast.error(
+          msg.includes("rejected")
+            ? "Transaction rejected"
+            : "Not ready yet — the relayer is still decrypting. It'll flip to Ready automatically."
+        )
+      }
     } finally {
       setBusyId(null)
     }
