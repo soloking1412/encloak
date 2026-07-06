@@ -1,7 +1,13 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from "wagmi"
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useReadContract,
+  useAccount,
+  usePublicClient,
+} from "wagmi"
 import { parseUnits } from "viem"
 import { ERC20ABI, ERC7984WrapperABI } from "@/lib/contracts/abis"
 import { useActivity } from "@/hooks/useActivity"
@@ -18,6 +24,7 @@ export type WrapState =
 
 export function useWrap(pair: WrapperPair | null, rawAmount: string) {
   const { address } = useAccount()
+  const publicClient = usePublicClient()
   const { add: logActivity } = useActivity()
   const [state, setState] = useState<WrapState>("idle")
   const [error, setError] = useState<string | null>(null)
@@ -68,22 +75,45 @@ export function useWrap(pair: WrapperPair | null, rawAmount: string) {
 
       if ((allowance ?? 0n) < amount) {
         setState("approving")
-        const hash = await writeContractAsync({
+        const approveHash = await writeContractAsync({
           address: pair.erc20.address,
           abi: ERC20ABI,
           functionName: "approve",
           args: [pair.wrapper.address, amount],
         })
-        setApproveTxHash(hash)
+        setApproveTxHash(approveHash)
+        // Wait for the approval to be mined so the wrap can be gas-estimated
+        // against a state where the allowance actually exists. Without this,
+        // wrap estimation fails, the wallet falls back to the block gas limit,
+        // and the RPC rejects it with "gas limit too high".
+        await publicClient?.waitForTransactionReceipt({ hash: approveHash })
         setState("approved")
       }
 
       setState("wrapping")
+      // Estimate gas explicitly through our RPC (FHE wraps estimate poorly
+      // through some wallet RPCs) and buffer it, so we never submit with the
+      // block-limit fallback that triggers "gas limit too high".
+      let gas: bigint | undefined
+      try {
+        const estimate = await publicClient?.estimateContractGas({
+          address: pair.wrapper.address,
+          abi: ERC7984WrapperABI,
+          functionName: "wrap",
+          args: [address, amount],
+          account: address,
+        })
+        if (estimate) gas = (estimate * 130n) / 100n
+      } catch {
+        gas = undefined
+      }
+
       const hash = await writeContractAsync({
         address: pair.wrapper.address,
         abi: ERC7984WrapperABI,
         functionName: "wrap",
         args: [address, amount],
+        ...(gas ? { gas } : {}),
       })
       setWrapTxHash(hash)
       setState("success")
@@ -100,7 +130,7 @@ export function useWrap(pair: WrapperPair | null, rawAmount: string) {
       setError(msg.includes("User rejected") ? "Transaction rejected" : msg.slice(0, 120))
       setState("error")
     }
-  }, [pair, address, amount, allowance, erc20Balance, writeContractAsync, rawAmount, logActivity])
+  }, [pair, address, amount, allowance, erc20Balance, writeContractAsync, publicClient, rawAmount, logActivity])
 
   const reset = useCallback(() => {
     setState("idle")

@@ -8,9 +8,16 @@ vi.mock("wagmi", () => ({
   useWaitForTransactionReceipt: vi.fn(),
   useReadContract: vi.fn(),
   useAccount: vi.fn(),
+  usePublicClient: vi.fn(),
 }))
 
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from "wagmi"
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useReadContract,
+  useAccount,
+  usePublicClient,
+} from "wagmi"
 import { useWrap } from "@/hooks/useWrap"
 
 const PAIR: WrapperPair = {
@@ -39,6 +46,10 @@ beforeEach(() => {
   vi.mocked(useReadContract).mockReturnValue({
     data: undefined,
   } as ReturnType<typeof useReadContract>)
+  vi.mocked(usePublicClient).mockReturnValue({
+    waitForTransactionReceipt: vi.fn().mockResolvedValue({ status: "success" }),
+    estimateContractGas: vi.fn().mockResolvedValue(1_000_000n),
+  } as unknown as ReturnType<typeof usePublicClient>)
 })
 
 describe("useWrap", () => {
