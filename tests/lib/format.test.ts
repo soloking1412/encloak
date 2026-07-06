@@ -29,6 +29,11 @@ describe("formatTokenAmount", () => {
     expect(formatTokenAmount(0n, 18)).toBe("0")
   })
 
+  it("shows a non-zero amount below display precision as '<0.0001' rather than '0'", () => {
+    expect(formatTokenAmount(50n, 6)).toBe("<0.0001")
+    expect(formatTokenAmount(1n, 18)).toBe("<0.0001")
+  })
+
   it("handles very large amounts", () => {
     const result = formatTokenAmount(1000000000000000000000000n, 18)
     expect(result).toBe("1000000")

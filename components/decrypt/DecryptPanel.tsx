@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { isAddress } from "viem"
 import { useAccount } from "wagmi"
-import { LockKeyhole, LockOpen } from "lucide-react"
+import { LockKeyhole, LockOpen, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -61,7 +62,9 @@ export function DecryptPanel({ pairs, chainId }: Props) {
           )}
         </div>
         <p className="text-xs text-muted-foreground -mt-2">
-          Decrypt all balances with a single EIP-712 signature, or reveal them one at a time.
+          These are your <strong className="text-foreground">confidential (wrapped)</strong> balances.
+          Faucet tokens are plain ERC-20 — <Link href="/wrap" className="text-primary hover:underline">wrap</Link>{" "}
+          them first, then a balance shows here. Decrypt all with a single EIP-712 signature, or reveal one at a time.
         </p>
 
         {!address && (
@@ -104,11 +107,23 @@ export function DecryptPanel({ pairs, chainId }: Props) {
 
                   <div className="flex items-center gap-3 shrink-0">
                     {balance !== undefined ? (
-                      <span className="font-mono text-sm text-emerald-400 flex items-center gap-1.5 animate-in fade-in blur-in zoom-in-95 duration-500">
-                        <LockOpen className="h-3.5 w-3.5" />
-                        {formatTokenAmount(balance, pair.wrapper.decimals)}{" "}
-                        <span className="text-xs text-muted-foreground">{pair.wrapper.symbol}</span>
-                      </span>
+                      balance === 0n ? (
+                        <span className="flex items-center gap-2 text-xs animate-in fade-in duration-300">
+                          <span className="font-mono text-muted-foreground">0 {pair.wrapper.symbol}</span>
+                          <Link
+                            href={`/wrap?token=${pair.erc20.address}`}
+                            className="flex items-center gap-0.5 text-primary hover:underline"
+                          >
+                            Wrap <ArrowRight className="h-3 w-3" />
+                          </Link>
+                        </span>
+                      ) : (
+                        <span className="font-mono text-sm text-emerald-400 flex items-center gap-1.5 animate-in fade-in blur-in zoom-in-95 duration-500">
+                          <LockOpen className="h-3.5 w-3.5" />
+                          {formatTokenAmount(balance, pair.wrapper.decimals)}{" "}
+                          <span className="text-xs text-muted-foreground">{pair.wrapper.symbol}</span>
+                        </span>
+                      )
                     ) : err ? (
                       <span className="text-xs text-destructive max-w-36">{err}</span>
                     ) : null}

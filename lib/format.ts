@@ -1,10 +1,14 @@
 import { formatUnits } from "viem"
 
 export function formatTokenAmount(amount: bigint, decimals: number, maxFrac = 4): string {
+  if (amount === 0n) return "0"
   const s = formatUnits(amount, decimals)
-  const [int, frac] = s.split(".")
+  const [int, frac = ""] = s.split(".")
   if (!frac) return int
-  return `${int}.${frac.slice(0, maxFrac).replace(/0+$/, "") || "0"}`
+  const trimmed = frac.slice(0, maxFrac).replace(/0+$/, "")
+  // Non-zero amount that rounds below display precision — don't show it as "0".
+  if (trimmed === "") return `<0.${"0".repeat(maxFrac - 1)}1`
+  return `${int}.${trimmed}`
 }
 
 export function truncateAddress(addr: string): string {

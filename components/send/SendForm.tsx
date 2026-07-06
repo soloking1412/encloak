@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { useAccount } from "wagmi"
+import { formatUnits } from "viem"
 import { toast } from "sonner"
-import { Send, ShieldCheck, LockKeyhole } from "lucide-react"
+import { Send, ShieldCheck, LockKeyhole, LockOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +17,8 @@ import {
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useConfidentialTransfer } from "@/hooks/useConfidentialTransfer"
-import { truncateAddress } from "@/lib/format"
+import { useDecryptBalance } from "@/hooks/useDecryptBalance"
+import { truncateAddress, formatTokenAmount } from "@/lib/format"
 import { etherscanTx as ethTx } from "@/lib/contracts/addresses"
 import type { WrapperPair } from "@/types"
 
@@ -41,6 +43,19 @@ export function SendForm({ pairs, chainId }: Props) {
 
   const { state, error, txHash, recipientValid, isSelf, isLoading, send, reset } =
     useConfidentialTransfer(selectedPair, recipient, amount)
+
+  const { balances, loading: decLoading, decrypt } = useDecryptBalance()
+  const balKey = selectedPair?.wrapper.address.toLowerCase()
+  const knownBalance = balKey ? balances[balKey] : undefined
+  const decrypting = balKey ? decLoading[balKey] : false
+
+  const setMax = () => {
+    if (knownBalance !== undefined && selectedPair)
+      setAmount(formatUnits(knownBalance, selectedPair.wrapper.decimals))
+  }
+  const handleDecrypt = () => {
+    if (selectedPair) decrypt(selectedPair.wrapper.address, chainId, selectedPair.wrapper.symbol)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -118,7 +133,30 @@ export function SendForm({ pairs, chainId }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label>Amount</Label>
+        <div className="flex items-center justify-between">
+          <Label>Amount</Label>
+          {selectedPair &&
+            (knownBalance !== undefined ? (
+              <button
+                type="button"
+                onClick={setMax}
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <LockOpen className="h-3 w-3" />
+                Balance: {formatTokenAmount(knownBalance, selectedPair.wrapper.decimals)}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleDecrypt}
+                disabled={decrypting}
+                className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
+              >
+                <LockKeyhole className="h-3 w-3" />
+                {decrypting ? "Decrypting…" : "Decrypt balance"}
+              </button>
+            ))}
+        </div>
         <div className="relative">
           <Input
             type="number"
@@ -134,13 +172,16 @@ export function SendForm({ pairs, chainId }: Props) {
           />
           <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
         </div>
-        <p className="text-xs text-muted-foreground">
-          Balance is encrypted.{" "}
-          <a href="/decrypt" className="text-primary hover:underline">
-            Decrypt it first
-          </a>{" "}
-          to see how much you can send.
-        </p>
+        {knownBalance === undefined ? (
+          <p className="text-xs text-muted-foreground">
+            Your balance is encrypted — click <span className="text-foreground">Decrypt balance</span> to
+            reveal how much you can send.
+          </p>
+        ) : knownBalance === 0n ? (
+          <p className="text-xs text-muted-foreground">
+            You hold 0 {selectedPair?.wrapper.symbol} — wrap some on the Wrap page first.
+          </p>
+        ) : null}
       </div>
 
       {error && (
